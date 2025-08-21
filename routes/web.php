@@ -21,6 +21,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/admin/settings', [EventSettingsController::class, 'settings'])->name('admin.settings');
     Route::get('/admin/registrations', [EventSettingsController::class, 'registrations'])->name('admin.registrations');
     Route::delete('/admin/registrations/{id}', [EventSettingsController::class, 'deleteRegistration'])->name('admin.registrations.delete');
+    Route::get('/admin/registrations/export', [EventSettingsController::class, 'exportRegistrations'])->name('admin.registrations.export');
     Route::post('/admin/settings', [EventSettingsController::class, 'storeSettings'])->name('admin.settings.store');
     Route::post('/admin/dates', [EventSettingsController::class, 'storeRegisterDate'])->name('admin.dates.store');
     Route::post('/admin/dates/{id}/update', [EventSettingsController::class, 'updateRegisterDate'])->name('admin.dates.update');

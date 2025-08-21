@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel;
 
 class EventSettingsController extends Controller
 {
@@ -188,12 +189,13 @@ class EventSettingsController extends Controller
     }
 
     /**
-     * Update register time status
+     * Update register time status or fields
      */
     public function updateRegisterTime(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'is_active' => 'required|boolean',
+            'is_active' => 'sometimes|boolean',
+            'time'      => 'sometimes|string',
         ]);
 
         if ($validator->fails()) {
@@ -201,10 +203,17 @@ class EventSettingsController extends Controller
         }
 
         try {
-            $time = RegisterTime::findOrFail($id);
-            $time->update([
-                'is_active' => $request->is_active,
-            ]);
+            $time       = RegisterTime::findOrFail($id);
+            $updateData = [];
+            if ($request->has('is_active')) {
+                $updateData['is_active'] = (bool) $request->is_active;
+            }
+            if ($request->has('time')) {
+                $updateData['time'] = $request->time;
+            }
+            if (! empty($updateData)) {
+                $time->update($updateData);
+            }
 
             return back()->with('success', 'Time slot updated successfully');
         } catch (\Exception $e) {
@@ -259,12 +268,14 @@ class EventSettingsController extends Controller
     }
 
     /**
-     * Update register slot status
+     * Update register slot status or fields
      */
     public function updateRegisterSlot(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'is_active' => 'required|boolean',
+            'is_active'       => 'sometimes|boolean',
+            'title'           => 'sometimes|string|max:255',
+            'available_slots' => 'sometimes|integer|min:1',
         ]);
 
         if ($validator->fails()) {
@@ -272,10 +283,20 @@ class EventSettingsController extends Controller
         }
 
         try {
-            $slot = RegisterSlot::findOrFail($id);
-            $slot->update([
-                'is_active' => $request->is_active,
-            ]);
+            $slot       = RegisterSlot::findOrFail($id);
+            $updateData = [];
+            if ($request->has('is_active')) {
+                $updateData['is_active'] = (bool) $request->is_active;
+            }
+            if ($request->has('title')) {
+                $updateData['title'] = $request->title;
+            }
+            if ($request->has('available_slots')) {
+                $updateData['available_slots'] = (int) $request->available_slots;
+            }
+            if (! empty($updateData)) {
+                $slot->update($updateData);
+            }
 
             return back()->with('success', 'Slot updated successfully');
         } catch (\Exception $e) {
@@ -301,47 +322,75 @@ class EventSettingsController extends Controller
     /**
      * Display all registrations with date/time/slot information
      */
-    public function registrations(): Response
+    public function registrations(Request $request): Response
     {
-        $registrations = RegisterDate::with(['times.slots.userSelections' => function ($query) {
+        $search = trim((string) $request->query('q', ''));
+
+        $registrations = RegisterDate::with(['times.slots.userSelections' => function ($query) use ($search) {
             $query->where('is_delete', false);
+            if ($search !== '') {
+                $query->where(function ($q) use ($search) {
+                    $q->where('userid', 'like', "%{$search}%")
+                        ->orWhere('name', 'like', "%{$search}%");
+                });
+            }
         }])
             ->orderBy('date')
             ->get()
             ->map(function ($date) {
+                $times = $date->times->map(function ($time) {
+                    $slots = $time->slots->map(function ($slot) {
+                        $userSelections = $slot->userSelections->map(function ($selection) {
+                            return [
+                                'id'            => $selection->id,
+                                'userid'        => $selection->userid,
+                                'name'          => $selection->name,
+                                'position'      => $selection->position,
+                                'department'    => $selection->department,
+                                'register_type' => $selection->register_type,
+                            ];
+                        });
+
+                        return [
+                            'id'              => $slot->id,
+                            'title'           => $slot->title,
+                            'available_slots' => $slot->available_slots,
+                            'userSelections'  => $userSelections,
+                        ];
+                    })
+                        ->filter(function ($slot) {
+                            return $slot['userSelections']->count() > 0;
+                        })
+                        ->values();
+
+                    return [
+                        'id'             => $time->id,
+                        'time'           => $time->time,
+                        'formatted_time' => date('g:i A', strtotime($time->time)),
+                        'slots'          => $slots,
+                    ];
+                })
+                    ->filter(function ($time) {
+                        return collect($time['slots'])->count() > 0;
+                    })
+                    ->sortBy('time')
+                    ->values();
+
                 return [
                     'id'             => $date->id,
                     'date'           => $date->date->format('Y-m-d'),
                     'formatted_date' => $date->date->format('l, F j, Y'),
-                    'times'          => $date->times->map(function ($time) {
-                        return [
-                            'id'             => $time->id,
-                            'time'           => $time->time,
-                            'formatted_time' => date('g:i A', strtotime($time->time)),
-                            'slots'          => $time->slots->map(function ($slot) {
-                                return [
-                                    'id'              => $slot->id,
-                                    'title'           => $slot->title,
-                                    'available_slots' => $slot->available_slots,
-                                    'userSelections'  => $slot->userSelections->map(function ($selection) {
-                                        return [
-                                            'id'            => $selection->id,
-                                            'userid'        => $selection->userid,
-                                            'name'          => $selection->name,
-                                            'position'      => $selection->position,
-                                            'department'    => $selection->department,
-                                            'register_type' => $selection->register_type,
-                                        ];
-                                    }),
-                                ];
-                            }),
-                        ];
-                    })->sortBy('time')->values(),
+                    'times'          => $times,
                 ];
-            });
+            })
+            ->filter(function ($date) {
+                return collect($date['times'])->count() > 0;
+            })
+            ->values();
 
         return Inertia::render('admin/registrations', [
             'registrations' => $registrations,
+            'search'        => $search,
         ]);
     }
 
@@ -358,5 +407,15 @@ class EventSettingsController extends Controller
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to delete registration');
         }
+    }
+
+    /**
+     * Export all user slot selections grouped by date and time to Excel
+     */
+    public function exportRegistrations()
+    {
+        $filename = 'registrations_' . now()->format('Ymd_His') . '.xlsx';
+
+        return Excel::download(new \App\Exports\RegistrationsExport(), $filename);
     }
 }

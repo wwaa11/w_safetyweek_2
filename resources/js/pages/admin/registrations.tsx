@@ -1,9 +1,11 @@
 import { Head } from '@inertiajs/react';
+import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Trash2, Calendar, Clock, Users, ArrowLeft } from 'lucide-react';
+import { Trash2, Calendar, Clock, Users, ArrowLeft, Building2 } from 'lucide-react';
 import { router } from '@inertiajs/react';
 
 interface Registration {
@@ -32,9 +34,22 @@ interface Registration {
 
 interface AdminRegistrationsProps {
     registrations: Registration[];
+    search?: string;
 }
 
-export default function AdminRegistrations({ registrations }: AdminRegistrationsProps) {
+export default function AdminRegistrations({ registrations, search: initialSearch = '' }: AdminRegistrationsProps) {
+    const [search, setSearch] = useState(initialSearch);
+
+    useEffect(() => {
+        const handle = setTimeout(() => {
+            const params = search.trim() ? { q: search.trim() } : {};
+            router.get(route('admin.registrations'), params, {
+                preserveState: true,
+                replace: true,
+            });
+        }, 300);
+        return () => clearTimeout(handle);
+    }, [search]);
     const handleDeleteRegistration = (registrationId: number) => {
         if (confirm('Are you sure you want to delete this registration?')) {
             router.delete(route('admin.registrations.delete', registrationId));
@@ -46,34 +61,57 @@ export default function AdminRegistrations({ registrations }: AdminRegistrations
     };
 
     return (
-        <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
             <Head title="Admin - All Registrations" />
 
             {/* Header */}
-            <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+            <header className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-lg border-b border-gray-200/50 dark:border-gray-700/50 sticky top-0 z-50">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                     <div className="flex justify-between items-center h-16">
                         <div className="flex items-center space-x-4">
+                            <div className="flex items-center justify-center w-10 h-10 bg-gradient-to-r from-blue-600 to-indigo-600 rounded-xl shadow-lg">
+                                <Building2 className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                                <h1 className="text-xl font-bold bg-gradient-to-r from-gray-900 to-gray-700 dark:from-white dark:to-gray-300 bg-clip-text text-transparent">
+                                    Safety Week Management
+                                </h1>
+                                <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                                    Event Management System
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex items-center space-x-6">
+                            <Input
+                                value={search}
+                                onChange={(e) => setSearch(e.target.value)}
+                                placeholder="Search by user ID or name"
+                                className="w-64 dark:bg-gray-800 dark:text-white"
+                            />
                             <Button
-                                variant="ghost"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => { window.location.href = route('admin.registrations.export'); }}
+                                className="flex items-center space-x-2 border-2 transition-all duration-200"
+                            >
+                                <span>Export Excel</span>
+                            </Button>
+                            <Button
+                                variant="outline"
                                 size="sm"
                                 onClick={handleBackToDashboard}
-                                className="flex items-center space-x-2"
+                                className="flex items-center space-x-2 border-2  transition-all duration-200"
                             >
                                 <ArrowLeft className="h-4 w-4" />
-                                <span>Back to Dashboard</span>
+                                <span className="hidden sm:inline">Back to Dashboard</span>
                             </Button>
-                            <Separator orientation="vertical" className="h-6" />
-                            <h1 className="text-xl font-semibold text-gray-900 dark:text-white">
-                                All Registrations
-                            </h1>
                         </div>
                     </div>
                 </div>
             </header>
 
             {/* Main Content */}
-            <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
+            <main className="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
                 <div className="px-4 py-6 sm:px-0">
                     {/* Summary Stats */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
@@ -143,7 +181,7 @@ export default function AdminRegistrations({ registrations }: AdminRegistrations
                                             <div key={time.id} className="border-l-2 border-gray-200 pl-4">
                                                 <div className="flex items-center space-x-2 mb-3">
                                                     <Clock className="h-4 w-4 text-green-600" />
-                                                    <span className="font-medium text-gray-900 dark:text-white">
+                                                    <span className="font-medium text-gray-900 ">
                                                         {time.formatted_time}
                                                     </span>
                                                 </div>

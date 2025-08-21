@@ -55,7 +55,7 @@ class WebController extends Controller
                     })->sortBy('time')->values(),
                 ];
             });
-        return Inertia::render('user-index', [
+        return Inertia::render('index', [
             'availableDates' => $availableDates,
             'settings'       => [
                 'title'                => $settings?->title ?? 'Safety Week Registration',
