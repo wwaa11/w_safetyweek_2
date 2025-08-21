@@ -28,7 +28,7 @@ class EventSettingsController extends Controller
             ->where('date', '<=', now()->addDays(7)->toDateString())
             ->count();
 
-        return Inertia::render('dashboard', [
+        return Inertia::render('admin/dashboard', [
             'stats' => [
                 'totalDates'         => $totalDates,
                 'totalTimeSlots'     => $totalTimeSlots,
@@ -47,7 +47,7 @@ class EventSettingsController extends Controller
         $settings      = Setting::first();
         $registerDates = RegisterDate::with('times.slots')->orderBy('date')->get();
 
-        return Inertia::render('settings/event-settings', [
+        return Inertia::render('admin/event-settings', [
             'settings'      => $settings,
             'registerDates' => $registerDates,
             'success'       => session('success'),
