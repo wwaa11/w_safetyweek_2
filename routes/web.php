@@ -1,28 +1,35 @@
 <?php
 
+use App\Http\Controllers\AuthenticatedSessionController;
+use App\Http\Controllers\EventSettingsController;
+use App\Http\Controllers\WebController;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('welcome');
-})->name('home');
+// Authentication Routes
+Route::get('/login', [AuthenticatedSessionController::class, 'login'])->name('login');
+Route::post('/login', [AuthenticatedSessionController::class, 'store'])->name('login.store');
+Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::get('/', [WebController::class, 'index'])->name('user.index');
+Route::post('/api/getuser', [WebController::class, 'getUser'])->name('api.getuser');
+Route::post('/api/register-slot', [WebController::class, 'registerSlot'])->name('api.register-slot');
+Route::get('/api/get-slot-selection/{id}', [WebController::class, 'getSlotSelection'])->name('api.get-slot-selection');
+Route::post('/api/search-registrations', [WebController::class, 'searchRegistrations'])->name('api.search-registrations');
 
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
-
-    // Event Settings Routes
-    Route::prefix('settings')->name('settings.')->group(function () {
-        Route::get('/event', [App\Http\Controllers\EventSettingsController::class, 'index'])->name('event');
-        Route::post('/event/settings', [App\Http\Controllers\EventSettingsController::class, 'storeSettings'])->name('event.settings.store');
-        Route::post('/event/dates', [App\Http\Controllers\EventSettingsController::class, 'storeRegisterDate'])->name('event.dates.store');
-        Route::put('/event/dates/{id}', [App\Http\Controllers\EventSettingsController::class, 'updateRegisterDate'])->name('event.dates.update');
-        Route::delete('/event/dates/{id}', [App\Http\Controllers\EventSettingsController::class, 'deleteRegisterDate'])->name('event.dates.delete');
-        Route::post('/event/times', [App\Http\Controllers\EventSettingsController::class, 'storeRegisterTime'])->name('event.times.store');
-        Route::put('/event/times/{id}', [App\Http\Controllers\EventSettingsController::class, 'updateRegisterTime'])->name('event.times.update');
-        Route::delete('/event/times/{id}', [App\Http\Controllers\EventSettingsController::class, 'deleteRegisterTime'])->name('event.times.delete');
-        Route::post('/event/save-all', [App\Http\Controllers\EventSettingsController::class, 'saveAll'])->name('event.save-all');
-    });
+Route::middleware(['auth', 'admin'])->group(function () {
+    Route::get('/admin', [EventSettingsController::class, 'index'])->name('admin.dashboard');
+    Route::get('/admin/settings', [EventSettingsController::class, 'settings'])->name('admin.settings');
+    Route::get('/admin/registrations', [EventSettingsController::class, 'registrations'])->name('admin.registrations');
+    Route::delete('/admin/registrations/{id}', [EventSettingsController::class, 'deleteRegistration'])->name('admin.registrations.delete');
+    Route::post('/admin/settings', [EventSettingsController::class, 'storeSettings'])->name('admin.settings.store');
+    Route::post('/admin/dates', [EventSettingsController::class, 'storeRegisterDate'])->name('admin.dates.store');
+    Route::post('/admin/dates/{id}/update', [EventSettingsController::class, 'updateRegisterDate'])->name('admin.dates.update');
+    Route::delete('/admin/dates/{id}', [EventSettingsController::class, 'deleteRegisterDate'])->name('admin.dates.delete');
+    Route::post('/admin/times', [EventSettingsController::class, 'storeRegisterTime'])->name('admin.times.store');
+    Route::post('/admin/times/{id}/update', [EventSettingsController::class, 'updateRegisterTime'])->name('admin.times.update');
+    Route::delete('/admin/times/{id}', [EventSettingsController::class, 'deleteRegisterTime'])->name('admin.times.delete');
+    Route::post('/admin/slots', [EventSettingsController::class, 'storeRegisterSlot'])->name('admin.slots.store');
+    Route::post('/admin/slots/{id}/update', [EventSettingsController::class, 'updateRegisterSlot'])->name('admin.slots.update');
+    Route::delete('/admin/slots/{id}', [EventSettingsController::class, 'deleteRegisterSlot'])->name('admin.slots.delete');
+    Route::post('/admin/save-all', [EventSettingsController::class, 'saveAll'])->name('admin.save-all');
 });

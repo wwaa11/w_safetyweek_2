@@ -14,6 +14,10 @@ return new class extends Migration
         Schema::create('users', function (Blueprint $table) {
             $table->id();
             $table->string('user_id')->unique();
+            $table->string('name')->nullable();
+            $table->string('department')->nullable();
+            $table->string('position')->nullable();
+            $table->enum('role', ['user', 'admin'])->default('user');
             $table->timestamps();
         });
 
