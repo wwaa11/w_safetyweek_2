@@ -1,2 +1,4 @@
-export { default } from './event-settings/Page';
+import EventSettingsPage from './event-settings/Page';
+
+export default EventSettingsPage;
 

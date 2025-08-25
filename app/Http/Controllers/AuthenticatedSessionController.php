@@ -70,7 +70,7 @@ class AuthenticatedSessionController extends Controller
             ], 422);
         }
 
-        $request->authenticate();
+        $request->authenticate($request);
 
         $request->session()->regenerate();
 

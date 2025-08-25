@@ -3,6 +3,8 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
+        "build:dev": "set NODE_ENV=development && vite build",
+        "build:prod": "set VITE_APP_ENV=production && vite build",
         "build:ssr": "vite build && vite build --ssr",
         "dev": "vite",
         "format": "prettier --write resources/",
