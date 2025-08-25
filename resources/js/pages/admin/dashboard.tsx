@@ -20,6 +20,8 @@ interface DashboardProps {
         totalTimeSlots: number;
         totalSlots: number;
         totalRegistrations: number;
+        totalAvailableSlots: number;
+        totalCapacity: number;
         upcomingSessions: number;
     };
 }
@@ -139,20 +141,43 @@ export default function Dashboard({ auth, stats }: DashboardProps) {
                             </CardContent>
                         </Card>
 
-                        <Card className="group hover:shadow-xl transition-all duration-300 border-0 bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm shadow-lg hover:scale-105">
+
+
+                        <Card className={`group hover:shadow-xl transition-all duration-300 border-0 backdrop-blur-sm shadow-lg hover:scale-105 ${stats.totalAvailableSlots === 0 ? 'bg-red-50/70 dark:bg-red-900/20' :
+                            stats.totalAvailableSlots <= 10 ? 'bg-amber-50/70 dark:bg-amber-900/20' :
+                                'bg-white/70 dark:bg-gray-800/70'
+                            }`}>
                             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                                <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">Total Slots</CardTitle>
-                                <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-violet-600 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow">
-                                    <Users className="h-5 w-5 text-white" />
+                                <CardTitle className={`text-sm font-semibold ${stats.totalAvailableSlots === 0 ? 'text-red-700 dark:text-red-300' :
+                                    stats.totalAvailableSlots <= 10 ? 'text-amber-700 dark:text-amber-300' :
+                                        'text-gray-700 dark:text-gray-300'
+                                    }`}>Available Slots</CardTitle>
+                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center shadow-md group-hover:shadow-lg transition-shadow ${stats.totalAvailableSlots === 0 ? 'bg-gradient-to-r from-red-500 to-red-600' :
+                                    stats.totalAvailableSlots <= 10 ? 'bg-gradient-to-r from-amber-500 to-amber-600' :
+                                        'bg-gradient-to-r from-teal-500 to-cyan-600'
+                                    }`}>
+                                    <TrendingUp className="h-5 w-5 text-white" />
                                 </div>
                             </CardHeader>
                             <CardContent>
-                                <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{stats.totalSlots}</div>
+                                <div className="text-3xl font-bold text-gray-900 dark:text-white mb-1">{stats.totalAvailableSlots}</div>
                                 <p className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                                    Available registration slots
+                                    Remaining slots
                                 </p>
+                                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-2">
+                                    <span>Total Capacity</span>
+                                    <span className="font-semibold text-blue-600 dark:text-blue-400">
+                                        {stats.totalCapacity}
+                                    </span>
+                                </div>
+                                <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    <span>Fill rate</span>
+                                    <span className="font-semibold">
+                                        {stats.totalCapacity > 0 ? Math.round(((stats.totalCapacity - stats.totalAvailableSlots) / stats.totalCapacity) * 100) : 0}%
+                                    </span>
+                                </div>
                                 <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-1 mt-3">
-                                    <div className="bg-gradient-to-r from-purple-500 to-violet-600 h-1 rounded-full" style={{ width: `${Math.min((stats.totalSlots / 100) * 100, 100)}%` }}></div>
+                                    <div className="bg-gradient-to-r from-teal-500 to-cyan-600 h-1 rounded-full" style={{ width: `${Math.min((stats.totalAvailableSlots / Math.max(stats.totalCapacity, 1)) * 100, 100)}%` }}></div>
                                 </div>
                             </CardContent>
                         </Card>

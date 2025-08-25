@@ -29,7 +29,8 @@ return new class extends Migration
         Schema::create('register_times', function (Blueprint $table) {
             $table->id();
             $table->foreignId('register_date_id');
-            $table->string('time');
+            $table->string('start_time');
+            $table->string('end_time');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
         });

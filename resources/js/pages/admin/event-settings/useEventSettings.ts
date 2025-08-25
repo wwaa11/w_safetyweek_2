@@ -22,7 +22,7 @@ export function useEventSettings({
 
     const [registerDates, setRegisterDates] = useState<RegisterDate[]>(initialDates || []);
     const [newDate, setNewDate] = useState('');
-    const [newTime, setNewTime] = useState('');
+    const [newTime, setNewTime] = useState<{ start_time: string; end_time: string }>({ start_time: '', end_time: '' });
     const [selectedDateId, setSelectedDateId] = useState<number | null>(null);
     const [selectedTimeId, setSelectedTimeId] = useState<number | null>(null);
     const [newSlotTitle, setNewSlotTitle] = useState('');
@@ -103,12 +103,18 @@ export function useEventSettings({
     };
 
     const addRegisterTime = async () => {
-        if (!newTime || selectedDateId === null) return;
+        if (!newTime.start_time || !newTime.end_time || selectedDateId === null) return;
+        if (newTime.start_time >= newTime.end_time) return;
+
         setIsLoading(true);
         try {
             router.post(
                 route('admin.times.store'),
-                { register_date_id: selectedDateId, time: newTime },
+                {
+                    register_date_id: selectedDateId,
+                    start_time: newTime.start_time,
+                    end_time: newTime.end_time
+                },
                 {
                     onFinish: () => setIsLoading(false),
                     preserveScroll: true,
@@ -121,22 +127,66 @@ export function useEventSettings({
         }
     };
 
-    const addRegisterSlot = async () => {
-        if (!newSlotTitle || selectedTimeId === null || newSlotCapacity <= 0) return;
-        setIsLoading(true);
-        try {
-            router.post(
-                route('admin.slots.store'),
-                { register_time_id: selectedTimeId, title: newSlotTitle, available_slots: newSlotCapacity },
-                {
-                    onFinish: () => setIsLoading(false),
-                    preserveScroll: true,
-                    preserveState: true,
-                },
+    const addRegisterSlot = async (massAdd: boolean = false) => {
+        if (massAdd) {
+            // Mass add to all time slots
+            if (!newSlotTitle || newSlotCapacity <= 0) return;
+
+            // Get all available time IDs
+            const allTimeIds = registerDates.flatMap((date) =>
+                date.times ? date.times.map((time) => time.id!) : []
             );
-        } catch (error) {
-            console.error('Error adding slot:', error);
-            setIsLoading(false);
+
+            if (allTimeIds.length === 0) return;
+
+            setIsLoading(true);
+            try {
+                // Use the new backend mass add endpoint
+                router.post(
+                    route('admin.slots.mass-add'),
+                    {
+                        title: newSlotTitle,
+                        available_slots: newSlotCapacity,
+                        time_ids: allTimeIds
+                    },
+                    {
+                        onFinish: () => setIsLoading(false),
+                        preserveScroll: true,
+                        preserveState: true,
+                    }
+                );
+
+                // Reset form after successful mass add
+                setNewSlotTitle('');
+                setNewSlotCapacity(10);
+
+            } catch (error) {
+                console.error('Error mass adding slots:', error);
+                setIsLoading(false);
+            }
+        } else {
+            // Single slot add
+            if (!newSlotTitle || selectedTimeId === null || newSlotCapacity <= 0) return;
+            setIsLoading(true);
+            try {
+                router.post(
+                    route('admin.slots.store'),
+                    { register_time_id: selectedTimeId, title: newSlotTitle, available_slots: newSlotCapacity },
+                    {
+                        onFinish: () => setIsLoading(false),
+                        preserveScroll: true,
+                        preserveState: true,
+                    },
+                );
+
+                // Reset form after successful single add
+                setNewSlotTitle('');
+                setNewSlotCapacity(10);
+                setSelectedTimeId(null);
+            } catch (error) {
+                console.error('Error adding slot:', error);
+                setIsLoading(false);
+            }
         }
     };
 
@@ -178,7 +228,7 @@ export function useEventSettings({
         }
     };
 
-    const updateTimeValue = async (timeId: number, newTime: string) => {
+    const updateTimeValue = async (timeId: number, newTime: { start_time: string; end_time: string }) => {
         let time: RegisterTime | undefined;
         for (const date of registerDates) {
             if (date.times) {
@@ -187,9 +237,18 @@ export function useEventSettings({
             }
         }
         if (!time?.id) return;
+
+        if (newTime.start_time >= newTime.end_time) {
+            alert('End time must be after start time');
+            return;
+        }
+
         setIsLoading(true);
         try {
-            router.post(route('admin.times.update', { id: time.id }), { time: newTime }, {
+            router.post(route('admin.times.update', { id: time.id }), {
+                start_time: newTime.start_time,
+                end_time: newTime.end_time
+            }, {
                 onFinish: () => setIsLoading(false),
                 preserveScroll: true,
                 preserveState: true,

@@ -26,12 +26,14 @@ class WebController extends Controller
             $isRegistrationOpen = $currentDate >= $settings->register_start_date && $currentDate <= $settings->register_end_date;
         }
 
-        $availableDates = RegisterDate::with(['times.slots'])
+        $availableDates = RegisterDate::with(['times' => function ($query) {
+            $query->orderBy('start_time', 'asc');
+        }, 'times.slots'])
             ->where('is_active', true)
             ->whereHas('times', function ($query) {
                 $query->where('is_active', true);
             })
-            ->orderBy('date')
+            ->orderBy('date', 'asc')
             ->get()
             ->map(function ($date) {
                 return [
@@ -48,11 +50,13 @@ class WebController extends Controller
 
                         return [
                             'id'                    => $time->id,
-                            'time'                  => $time->time,
-                            'formatted_time'        => date('g:i A', strtotime($time->time)),
+                            'time'                  => $time->start_time,
+                            'formatted_time'        => $time->end_time ?
+                            date('g:i A', strtotime($time->start_time)) . ' - ' . date('g:i A', strtotime($time->end_time)) :
+                            date('g:i A', strtotime($time->start_time)),
                             'total_available_slots' => $remainingSlots, // Remaining slots = Total capacity - Registered count
                         ];
-                    })->sortBy('time')->values(),
+                    })->values(),
                 ];
             });
         return Inertia::render('index', [
@@ -95,10 +99,15 @@ class WebController extends Controller
             }
 
             if (is_array($response) && ($response['status'] ?? 0) == 1 && isset($response['user'])) {
+
                 $user = [
                     'name'       => $response['user']['name'],
                     'department' => $response['user']['department'],
                 ];
+
+                if ($response['user']['department'] == 'Doctor') {
+                    $user['department'] = $response['user']['position'];
+                }
 
                 return response()->json([
                     'success' => true,
@@ -157,7 +166,10 @@ class WebController extends Controller
                 'time_id'       => $slotSelection->slot->time->id ?? null,
                 'date_id'       => $slotSelection->slot->time->date->id ?? null,
                 'slot_title'    => $slotSelection->slot->title ?? 'N/A',
-                'time'          => $slotSelection->slot->time ? date('g:i A', strtotime($slotSelection->slot->time->time)) : 'N/A',
+                'time'          => $slotSelection->slot->time ?
+                ($slotSelection->slot->time->end_time ?
+                    date('g:i A', strtotime($slotSelection->slot->time->start_time)) . ' - ' . date('g:i A', strtotime($slotSelection->slot->time->end_time)) :
+                    date('g:i A', strtotime($slotSelection->slot->time->start_time))) : 'N/A',
                 'date'          => $slotSelection->slot->time->date ? $slotSelection->slot->time->date->date->format('l, F j, Y') : 'N/A',
                 'created_at'    => $slotSelection->created_at->toISOString(),
             ];
@@ -253,7 +265,9 @@ class WebController extends Controller
                 'slot_info'         => [
                     'slot_id'    => $availableSlot->id,
                     'slot_title' => $availableSlot->title,
-                    'time'       => date('g:i A', strtotime($time->time)),
+                    'time'       => $time->end_time ?
+                    date('g:i A', strtotime($time->start_time)) . ' - ' . date('g:i A', strtotime($time->end_time)) :
+                    date('g:i A', strtotime($time->start_time)),
                     'date'       => $time->date->date->format('l, F j, Y'),
                 ],
             ]);
@@ -299,7 +313,10 @@ class WebController extends Controller
                         'department'    => $registration->department,
                         'register_type' => $registration->register_type,
                         'slot_title'    => $registration->slot->title ?? 'N/A',
-                        'time'          => $registration->slot->time ? date('g:i A', strtotime($registration->slot->time->time)) : 'N/A',
+                        'time'          => $registration->slot->time ?
+                        ($registration->slot->time->end_time ?
+                            date('g:i A', strtotime($registration->slot->time->start_time)) . ' - ' . date('g:i A', strtotime($registration->slot->time->end_time)) :
+                            date('g:i A', strtotime($registration->slot->time->start_time))) : 'N/A',
                         'date'          => $registration->slot->time->date ? $registration->slot->time->date->date->format('l, F j, Y') : 'N/A',
                         'created_at'    => $registration->created_at->format('Y-m-d H:i:s'),
                     ];

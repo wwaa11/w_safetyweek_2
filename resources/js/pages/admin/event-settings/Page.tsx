@@ -156,7 +156,7 @@ export default function Page(props: EventSettingsProps) {
                                         setNewSlotCapacity={setNewSlotCapacity}
                                         isLoading={isLoading}
                                         errors={errors}
-                                        onAdd={addRegisterSlot}
+                                        onAdd={(massAdd) => addRegisterSlot(massAdd)}
                                     />
 
                                     <DatesList

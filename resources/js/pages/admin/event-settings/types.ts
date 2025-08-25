@@ -16,7 +16,9 @@ export interface RegisterSlot {
 export interface RegisterTime {
     id?: number;
     register_date_id: number;
-    time: string;
+    time?: string; // Keep for backward compatibility
+    start_time?: string;
+    end_time?: string;
     is_active: boolean;
     slots?: RegisterSlot[];
 }

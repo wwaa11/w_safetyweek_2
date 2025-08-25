@@ -185,7 +185,7 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
         }
 
         if (!userId.trim() || !userName.trim()) {
-            setErrorMessage('กรุณาแน่ใจว่ารหัสผู้ใช้และชื่อของคุณถูกกรอกแล้ว');
+            setErrorMessage('กรุณาแน่ใจว่ารหัสพนักงาน/รหัสแพทย์และชื่อของคุณถูกกรอกแล้ว');
             return;
         }
 
@@ -259,7 +259,7 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
 
     const handleCheckUser = async () => {
         if (!userId.trim()) {
-            setErrorMessage('กรุณากรอกรหัสผู้ใช้');
+            setErrorMessage('กรุณากรอกรหัสพนักงาน/รหัสแพทย์');
             return;
         }
 
@@ -355,7 +355,7 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
 
     const handleShowConfirmModal = () => {
         if (!userId.trim() || !userName.trim()) {
-            setErrorMessage('กรุณาแน่ใจว่ารหัสผู้ใช้และชื่อของคุณถูกกรอกแล้ว');
+            setErrorMessage('กรุณาแน่ใจว่ารหัสพนักงาน/รหัสแพทย์และชื่อของคุณถูกกรอกแล้ว');
             return;
         }
         setShowConfirmModal(true);
@@ -510,7 +510,7 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                             <div className="text-center sm:text-left">
                                 <CardTitle className="text-xl sm:text-2xl font-bold">ค้นหาการลงทะเบียน</CardTitle>
                                 <CardDescription className="text-blue-100 text-sm sm:text-base">
-                                    ค้นหาการลงทะเบียนด้วยรหัสผู้ใช้หรือชื่อ
+                                    ค้นหาการลงทะเบียนด้วยรหัสพนักงาน/รหัสแพทย์หรือชื่อ
                                 </CardDescription>
                             </div>
                         </div>
@@ -520,7 +520,7 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                             <div className="flex-1">
                                 <Input
                                     type="text"
-                                    placeholder="กรอกรหัสผู้ใช้หรือชื่อเพื่อค้นหา..."
+                                    placeholder="กรอกรหัสพนักงาน/รหัสแพทย์หรือชื่อเพื่อค้นหา..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     onKeyPress={(e) => e.key === 'Enter' && handleSearchRegistrations()}
@@ -571,7 +571,7 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                                                 <div key={registration.id} className="bg-white rounded-xl p-6 border border-blue-200 shadow-sm hover:shadow-md transition-all duration-200">
                                                     <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                                                         <div>
-                                                            <span className="font-medium text-blue-700 text-sm">รหัสผู้ใช้:</span>
+                                                            <span className="font-medium text-blue-700 text-sm">รหัสพนักงาน/รหัสแพทย์:</span>
                                                             <p className="text-blue-800 mt-1 font-mono bg-blue-50 px-3 py-2 rounded-lg break-all">{registration.userid}</p>
                                                         </div>
                                                         <div>
@@ -663,7 +663,7 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                                         </div>
                                         <div className="text-center sm:text-left">
                                             <h3 className="text-xl sm:text-2xl font-bold">ยืนยันการลงทะเบียนแล้ว</h3>
-                                            <p className="text-emerald-100 text-sm sm:text-base">คุณพร้อมสำหรับสัปดาห์ความปลอดภัยแล้ว!</p>
+                                            <p className="text-emerald-100 text-sm sm:text-base">คุณพร้อมสำหรับ Safe Week แล้ว!</p>
                                         </div>
                                     </div>
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
@@ -727,7 +727,7 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                                     </h4>
                                     <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 text-xs sm:text-sm">
                                         <div>
-                                            <span className="font-medium text-emerald-700">รหัสผู้ใช้:</span>
+                                            <span className="font-medium text-emerald-700">รหัสพนักงาน/รหัสแพทย์:</span>
                                             <p className="text-emerald-800 mt-1 font-mono bg-emerald-50 px-2 py-1 rounded break-all">{userSlotSelection.userid}</p>
                                         </div>
                                         <div>
@@ -789,7 +789,7 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                                 </h3>
                                 <p className="text-blue-100 text-base sm:text-lg mb-4 sm:mb-6 px-2">
                                     คุณได้ลงทะเบียนเรียบร้อยแล้ว คุณสามารถดูรายละเอียดการลงทะเบียนได้ด้านบน
-                                    หากต้องการเปลี่ยนแปลงการลงทะเบียน กรุณาติดต่อทีมสัปดาห์ความปลอดภัย
+                                    หากต้องการเปลี่ยนแปลงการลงทะเบียน กรุณาติดต่อ Admin
                                 </p>
                                 <div className="flex justify-center">
                                     <Button
@@ -830,10 +830,13 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                                     ประเภทการลงทะเบียน
                                 </Label>
                                 <div className="grid gap-4 sm:grid-cols-2">
-                                    <div className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${registerType === 'regular'
-                                        ? 'border-teal-500 bg-teal-50 shadow-lg'
-                                        : 'border-gray-200 bg-gray-50 hover:border-gray-300'
-                                        }`}>
+                                    <div
+                                        className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${registerType === 'regular'
+                                            ? 'border-teal-500 bg-teal-50 shadow-lg'
+                                            : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                                            }`}
+                                        onClick={() => handleRegisterTypeChange('regular')}
+                                    >
                                         <input
                                             type="radio"
                                             id="regular"
@@ -854,17 +857,20 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                                             </div>
                                             <div>
                                                 <Label htmlFor="regular" className="text-lg font-semibold text-gray-800 cursor-pointer">
-                                                    พนักงานประจำ
+                                                    พนักงานประจำ/แพทย์
                                                 </Label>
-                                                <p className="text-sm text-gray-600">พนักงานบริษัทที่มีรหัสผู้ใช้อยู่แล้ว</p>
+                                                <p className="text-sm text-gray-600">พนักงานบริษัทที่มีรหัสพนักงาน/รหัสแพทย์อยู่แล้ว</p>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${registerType === 'outsource'
-                                        ? 'border-orange-500 bg-orange-50 shadow-lg'
-                                        : 'border-gray-200 bg-gray-50 hover:border-gray-300'
-                                        }`}>
+                                    <div
+                                        className={`relative p-4 rounded-xl border-2 cursor-pointer transition-all duration-200 ${registerType === 'outsource'
+                                            ? 'border-orange-500 bg-orange-50 shadow-lg'
+                                            : 'border-gray-200 bg-gray-50 hover:border-gray-300'
+                                            }`}
+                                        onClick={() => handleRegisterTypeChange('outsource')}
+                                    >
                                         <input
                                             type="radio"
                                             id="outsource"
@@ -898,13 +904,13 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                                 {/* User ID Field */}
                                 <div className="space-y-3">
                                     <Label htmlFor="userId" className="text-base font-semibold text-gray-800">
-                                        รหัสผู้ใช้ {registerType === 'outsource' && <span className="text-orange-600 font-medium">(สร้างอัตโนมัติ)</span>}
+                                        รหัสพนักงาน/รหัสแพทย์ {registerType === 'outsource' && <span className="text-orange-600 font-medium">(สร้างอัตโนมัติ)</span>}
                                     </Label>
                                     <div className="flex flex-col sm:flex-row gap-3">
                                         <Input
                                             id="userId"
                                             type="text"
-                                            placeholder={registerType === 'outsource' ? 'จะสร้างอัตโนมัติจากชื่อ' : 'กรอกรหัสผู้ใช้ของคุณ'}
+                                            placeholder={registerType === 'outsource' ? 'จะสร้างอัตโนมัติจากชื่อ' : 'กรอกรหัสพนักงาน/รหัสแพทย์ของคุณ'}
                                             value={userId}
                                             onChange={(e) => setUserId(e.target.value)}
                                             className="flex-1 text-base py-3 px-4 rounded-xl border-2 focus:border-teal-500 focus:ring-4 focus:ring-teal-100 transition-all duration-200 text-gray-900 placeholder-gray-500"
@@ -928,7 +934,7 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                                     {registerType === 'outsource' && (
                                         <p className="text-sm text-orange-600 bg-orange-50 p-3 rounded-lg border border-orange-200">
                                             <Info className="w-4 h-4 inline mr-2" />
-                                            รหัสผู้ใช้จะถูกสร้างอัตโนมัติในรูปแบบ: <code className="bg-orange-100 px-2 py-1 rounded">outsource-[name]-[department]</code>
+                                            รหัสพนักงาน/รหัสแพทย์จะถูกสร้างอัตโนมัติ
                                         </p>
                                     )}
                                 </div>
@@ -952,12 +958,12 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                                 {/* Department Field */}
                                 <div className="space-y-3">
                                     <Label htmlFor="department" className="text-base font-semibold text-gray-800">
-                                        แผนก
+                                        แผนก/หน่วยงาน
                                     </Label>
                                     <Input
                                         id="department"
                                         type="text"
-                                        placeholder="กรอกแผนกของคุณ"
+                                        placeholder="กรอกแผนก/หน่วยงานของคุณ"
                                         value={department}
                                         onChange={(e) => setDepartment(e.target.value)}
                                         className="text-base py-3 px-4 rounded-xl border-2 focus:border-teal-500 focus:ring-4 focus:ring-teal-100 transition-all duration-200 text-gray-900 placeholder-gray-500"
@@ -1111,7 +1117,7 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                                 <div className="bg-gradient-to-br from-gray-50 to-teal-50 rounded-2xl p-6 mb-6">
                                     <div className="grid gap-4 md:grid-cols-2 text-sm">
                                         <div className="bg-white rounded-xl p-4 border border-gray-200">
-                                            <span className="font-semibold text-gray-700 text-xs uppercase tracking-wide">รหัสผู้ใช้</span>
+                                            <span className="font-semibold text-gray-700 text-xs uppercase tracking-wide">รหัสพนักงาน/รหัสแพทย์</span>
                                             <p className="text-gray-900 mt-2 font-mono bg-gray-100 px-3 py-2 rounded-lg">{userId}</p>
                                         </div>
                                         <div className="bg-white rounded-xl p-4 border border-gray-200">
@@ -1119,7 +1125,7 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                                             <p className="text-gray-900 mt-2 font-medium">{userName}</p>
                                         </div>
                                         <div className="bg-white rounded-xl p-4 border border-gray-200">
-                                            <span className="font-semibold text-gray-700 text-xs uppercase tracking-wide">แผนก</span>
+                                            <span className="font-semibold text-gray-700 text-xs uppercase tracking-wide">แผนก/หน่วยงาน</span>
                                             <p className="text-gray-900 mt-2">{department || 'ไม่ระบุ'}</p>
                                         </div>
                                         <div className="bg-white rounded-xl p-4 border border-gray-200">
@@ -1136,7 +1142,7 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                                         <div className="flex items-center gap-3">
                                             <Info className="w-5 h-5 text-orange-600 flex-shrink-0" />
                                             <p className="text-orange-700 text-sm">
-                                                <strong>หมายเหตุ:</strong> ในฐานะที่เป็นพนักงาน Outsource รหัสผู้ใช้ของคุณจะถูกสร้างอัตโนมัติจากชื่อและแผนกของคุณ
+                                                <strong>หมายเหตุ:</strong> ในฐานะที่เป็นพนักงาน Outsource รหัสพนักงาน/รหัสแพทย์ของคุณจะถูกสร้างอัตโนมัติจากชื่อและแผนก/หน่วยงานของคุณ
                                             </p>
                                         </div>
                                     </div>
@@ -1207,7 +1213,7 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                                             การดำเนินการนี้จะ:
                                         </p>
                                         <ul className="text-red-600 text-sm space-y-2">
-                                            <li>• ลบข้อมูลการลงทะเบียนจากอุปกรณ์นี้</li>
+                                            <li>• ข้อมูลที่ลงทะเบียนไปแล้วจะไม่ถูกลบ หากต้องการเปลี่ยน กรุณาติดต่อ Admin</li>
                                             <li>• รีเซ็ตฟอร์มการลงทะเบียน</li>
                                             <li>• อนุญาตให้ผู้ใช้อื่นลงทะเบียนได้</li>
                                         </ul>
@@ -1245,8 +1251,8 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                     </div>
                 )}
 
-                {/* Available Dates - Only show if registration is open */}
-                {settings.is_registration_open ? (
+                {/* Available Dates - Only show if registration is open AND user hasn't registered yet */}
+                {settings.is_registration_open && !userSlotSelection ? (
                     <div className="space-y-8">
                         {availableDates.length === 0 ? (
                             <Card className="border-0 bg-white/90 backdrop-blur-md shadow-xl rounded-2xl overflow-hidden text-gray-900">
@@ -1305,7 +1311,7 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                                                                 {time.formatted_time}
                                                             </h3>
                                                             <p className="text-gray-600 text-sm sm:text-base">
-                                                                ช่วงเวลาที่สามารถลงทะเบียนได้
+                                                                {time.formatted_time && time.formatted_time.includes('-') ? 'ช่วงเวลาที่สามารถลงทะเบียนได้' : 'เวลาที่สามารถลงทะเบียนได้'}
                                                             </p>
                                                         </div>
                                                     </div>
@@ -1366,7 +1372,7 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                             ))
                         )}
                     </div>
-                ) : (
+                ) : !settings.is_registration_open ? (
                     <Card className="border-0 bg-white/90 backdrop-blur-md shadow-xl rounded-2xl overflow-hidden text-gray-900">
                         <CardContent className="p-16 text-center text-gray-900">
                             <div className="mx-auto w-24 h-24 bg-gradient-to-br from-red-200 to-red-300 rounded-full flex items-center justify-center mb-6">
@@ -1381,7 +1387,7 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                             </p>
                         </CardContent>
                     </Card>
-                )}
+                ) : null}
             </div>
         </div>
     );

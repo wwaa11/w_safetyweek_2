@@ -14,27 +14,36 @@ interface Props {
     confirmDeleteTime: (timeId: number) => void;
     toggleSlotActive: (slotId: number) => void;
     confirmDeleteSlot: (slotId: number) => void;
-    updateTimeValue: (timeId: number, newTime: string) => void;
+    updateTimeValue: (timeId: number, newTime: { start_time: string; end_time: string }) => void;
     updateSlotDetails: (slotId: number, payload: { title?: string; available_slots?: number }) => void;
 }
 
 export function DatesList({ registerDates, isLoading, toggleDateActive, confirmDeleteDate, toggleTimeActive, confirmDeleteTime, toggleSlotActive, confirmDeleteSlot, updateTimeValue, updateSlotDetails }: Props) {
     const [editingTimeId, setEditingTimeId] = useState<number | null>(null);
-    const [editingTimeValue, setEditingTimeValue] = useState('');
+    const [editingTimeValue, setEditingTimeValue] = useState<{ start_time: string; end_time: string }>({ start_time: '', end_time: '' });
     const [editingSlotId, setEditingSlotId] = useState<number | null>(null);
     const [editingSlotTitle, setEditingSlotTitle] = useState('');
     const [editingSlotCapacity, setEditingSlotCapacity] = useState<number | ''>('');
 
-    const startEditTime = (timeId: number, current: string) => {
+    const startEditTime = (timeId: number, current: { start_time?: string; end_time?: string }) => {
         setEditingTimeId(timeId);
-        setEditingTimeValue(current);
+        setEditingTimeValue({
+            start_time: current.start_time || '',
+            end_time: current.end_time || ''
+        });
     };
+
     const cancelEditTime = () => {
         setEditingTimeId(null);
-        setEditingTimeValue('');
+        setEditingTimeValue({ start_time: '', end_time: '' });
     };
+
     const saveEditTime = () => {
-        if (editingTimeId !== null && editingTimeValue) {
+        if (editingTimeId !== null && editingTimeValue.start_time && editingTimeValue.end_time) {
+            if (editingTimeValue.start_time >= editingTimeValue.end_time) {
+                alert('End time must be after start time');
+                return;
+            }
             updateTimeValue(editingTimeId, editingTimeValue);
             cancelEditTime();
         }
@@ -57,9 +66,49 @@ export function DatesList({ registerDates, isLoading, toggleDateActive, confirmD
         }
     };
 
+    const formatTimeRange = (time: { start_time?: string; end_time?: string; time?: string }) => {
+        if (time.start_time && time.end_time) {
+            return `${time.start_time} - ${time.end_time}`;
+        }
+        return time.time || 'No time set';
+    };
+
+    // Sort dates and times for proper ordering
+    // Note: Backend already provides sorted data, this is a fallback for consistent ordering
+    const sortedDates = [...registerDates].sort((a, b) => {
+        // First sort by date ascending
+        const dateA = new Date(a.date);
+        const dateB = new Date(b.date);
+
+        if (dateA < dateB) return -1;
+        if (dateA > dateB) return 1;
+
+        // If dates are equal, sort by start_time ascending
+        const timeA = a.times?.[0]?.start_time || '';
+        const timeB = b.times?.[0]?.start_time || '';
+
+        if (timeA < timeB) return -1;
+        if (timeA > timeB) return 1;
+        return 0;
+    });
+
+    // Sort times within each date by start_time ascending
+    // This ensures consistent ordering even if backend sorting changes
+    const sortedDatesWithSortedTimes = sortedDates.map(date => ({
+        ...date,
+        times: date.times ? [...date.times].sort((a, b) => {
+            const timeA = a.start_time || a.time || '';
+            const timeB = b.start_time || b.time || '';
+
+            if (timeA < timeB) return -1;
+            if (timeA > timeB) return 1;
+            return 0;
+        }) : []
+    }));
+
     return (
         <div className="space-y-6">
-            {registerDates.map((date) => (
+            {sortedDatesWithSortedTimes.map((date) => (
                 <div key={date.id} className="border-2 border-slate-200 rounded-2xl overflow-hidden bg-white shadow-lg">
                     <div className="flex items-center justify-between p-6 bg-gradient-to-r from-slate-100 to-blue-100 border-b-2 border-slate-200">
                         <div className="flex items-center gap-4">
@@ -107,13 +156,27 @@ export function DatesList({ registerDates, isLoading, toggleDateActive, confirmD
                                                     <Clock className="h-5 w-5 text-purple-600" />
                                                     {editingTimeId === time.id ? (
                                                         <div className="flex items-center gap-2">
-                                                            <Input type="time" value={editingTimeValue} onChange={(e) => setEditingTimeValue(e.target.value)} className="h-8 w-36" />
+                                                            <Input
+                                                                type="text"
+                                                                value={editingTimeValue.start_time}
+                                                                onChange={(e) => setEditingTimeValue({ ...editingTimeValue, start_time: e.target.value })}
+                                                                className="h-8 w-32"
+                                                                placeholder="09:00"
+                                                            />
+                                                            <span className="text-gray-500">to</span>
+                                                            <Input
+                                                                type="text"
+                                                                value={editingTimeValue.end_time}
+                                                                onChange={(e) => setEditingTimeValue({ ...editingTimeValue, end_time: e.target.value })}
+                                                                className="h-8 w-32"
+                                                                placeholder="10:00"
+                                                            />
                                                             <Button variant="outline" size="sm" onClick={saveEditTime} className="h-8 px-2"><Save className="h-3 w-3" /></Button>
                                                             <Button variant="ghost" size="sm" onClick={cancelEditTime} className="h-8 px-2"><X className="h-3 w-3" /></Button>
                                                         </div>
                                                     ) : (
                                                         <span className={`text-lg font-semibold ${time.is_active ? 'text-slate-900' : 'line-through text-slate-500'}`}>
-                                                            {time.time}
+                                                            {formatTimeRange(time)}
                                                         </span>
                                                     )}
                                                     <span className="px-2 py-1 bg-purple-100 text-purple-800 text-sm font-medium rounded-full">
@@ -126,7 +189,7 @@ export function DatesList({ registerDates, isLoading, toggleDateActive, confirmD
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        onClick={() => startEditTime(time.id!, time.time)}
+                                                        onClick={() => startEditTime(time.id!, { start_time: time.start_time, end_time: time.end_time })}
                                                         disabled={isLoading}
                                                         className="h-8 w-8 p-0 border-2"
                                                     >
@@ -195,16 +258,17 @@ export function DatesList({ registerDates, isLoading, toggleDateActive, confirmD
                                                                     disabled={isLoading}
                                                                     className="h-7 w-7 p-0 border-2 border-red-200 hover:border-red-300 text-red-600 hover:text-red-700 bg-white hover:bg-red-50"
                                                                 >
-                                                                    <Trash2 className="h-3 w-3" />
+                                                                    <Trash2 className="h-3 w-7" />
                                                                 </Button>
                                                             </div>
                                                         </div>
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <div className="text-center py-6 text-slate-500 text-sm bg-white rounded-lg border-2 border-dashed border-slate-200">
-                                                    <Users className="h-8 w-8 mx-auto mb-2 text-slate-400" />
-                                                    No slots added yet. Add slots above.
+                                                <div className="text-center py-6 text-gray-500">
+                                                    <Users className="h-8 w-8 mx-auto mb-2 text-gray-400" />
+                                                    <p>No registration slots created yet.</p>
+                                                    <p className="text-sm">Create slots to allow users to register for this time.</p>
                                                 </div>
                                             )}
                                         </div>
@@ -212,10 +276,10 @@ export function DatesList({ registerDates, isLoading, toggleDateActive, confirmD
                                 ))}
                             </div>
                         ) : (
-                            <div className="text-center py-8 text-slate-500 bg-white rounded-lg border-2 border-dashed border-slate-200">
-                                <Clock className="h-12 w-12 mx-auto mb-3 text-slate-400" />
-                                <p className="text-lg font-medium">No time slots added yet</p>
-                                <p className="text-sm">Add time slots above to get started</p>
+                            <div className="text-center py-8 text-gray-500">
+                                <Clock className="h-12 w-12 mx-auto mb-3 text-gray-400" />
+                                <p>No time slots created yet.</p>
+                                <p className="text-sm">Add time slots to allow users to register for this date.</p>
                             </div>
                         )}
                     </div>

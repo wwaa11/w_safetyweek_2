@@ -29,7 +29,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/admin/times', [EventSettingsController::class, 'storeRegisterTime'])->name('admin.times.store');
     Route::post('/admin/times/{id}/update', [EventSettingsController::class, 'updateRegisterTime'])->name('admin.times.update');
     Route::delete('/admin/times/{id}', [EventSettingsController::class, 'deleteRegisterTime'])->name('admin.times.delete');
+    Route::get('/admin/times/count', [EventSettingsController::class, 'getTimeSlotsCount'])->name('admin.times.count');
     Route::post('/admin/slots', [EventSettingsController::class, 'storeRegisterSlot'])->name('admin.slots.store');
+    Route::post('/admin/slots/mass-add', [EventSettingsController::class, 'massAddSlots'])->name('admin.slots.mass-add');
     Route::post('/admin/slots/{id}/update', [EventSettingsController::class, 'updateRegisterSlot'])->name('admin.slots.update');
     Route::delete('/admin/slots/{id}', [EventSettingsController::class, 'deleteRegisterSlot'])->name('admin.slots.delete');
     Route::post('/admin/save-all', [EventSettingsController::class, 'saveAll'])->name('admin.save-all');

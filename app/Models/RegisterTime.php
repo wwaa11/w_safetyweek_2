@@ -9,13 +9,15 @@ class RegisterTime extends Model
 {
     protected $fillable = [
         'register_date_id',
-        'time',
+        'start_time',
+        'end_time',
         'is_active',
     ];
 
     protected $casts = [
-        'time'      => 'string',
-        'is_active' => 'boolean',
+        'start_time' => 'string',
+        'end_time'   => 'string',
+        'is_active'  => 'boolean',
     ];
 
     /**

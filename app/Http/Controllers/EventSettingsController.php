@@ -22,6 +22,12 @@ class EventSettingsController extends Controller
         $totalSlots         = RegisterSlot::where('is_active', true)->count();
         $totalRegistrations = UserSlotSelection::where('is_delete', false)->count();
 
+        // Calculate total capacity by summing available_slots from all active slots
+        $totalCapacity = RegisterSlot::where('is_active', true)->sum('available_slots');
+
+        // Calculate total available slots (total capacity minus registered slots)
+        $totalAvailableSlots = max(0, $totalCapacity - $totalRegistrations);
+
         // Get upcoming sessions (next 7 days)
         $upcomingSessions = RegisterDate::with(['times.slots'])
             ->where('is_active', true)
@@ -31,11 +37,13 @@ class EventSettingsController extends Controller
 
         return Inertia::render('admin/dashboard', [
             'stats' => [
-                'totalDates'         => $totalDates,
-                'totalTimeSlots'     => $totalTimeSlots,
-                'totalSlots'         => $totalSlots,
-                'totalRegistrations' => $totalRegistrations,
-                'upcomingSessions'   => $upcomingSessions,
+                'totalDates'          => $totalDates,
+                'totalTimeSlots'      => $totalTimeSlots,
+                'totalSlots'          => $totalSlots,
+                'totalRegistrations'  => $totalRegistrations,
+                'totalAvailableSlots' => $totalAvailableSlots,
+                'totalCapacity'       => $totalCapacity,
+                'upcomingSessions'    => $upcomingSessions,
             ],
         ]);
     }
@@ -46,7 +54,9 @@ class EventSettingsController extends Controller
     public function settings(): Response
     {
         $settings      = Setting::first();
-        $registerDates = RegisterDate::with('times.slots')->orderBy('date')->get();
+        $registerDates = RegisterDate::with(['times' => function ($query) {
+            $query->orderBy('start_time', 'asc');
+        }, 'times.slots'])->orderBy('date', 'asc')->get();
 
         return Inertia::render('admin/event-settings', [
             'settings'      => $settings,
@@ -150,8 +160,14 @@ class EventSettingsController extends Controller
     {
         try {
             $date = RegisterDate::findOrFail($id);
-            // Delete associated times first (this will happen automatically due to foreign key constraints)
+
+            // Delete all slots associated with times in this date first
+            $timeIds = $date->times()->pluck('id');
+            RegisterSlot::whereIn('register_time_id', $timeIds)->delete();
+
+            // Delete all times associated with this date
             $date->times()->delete();
+
             // Delete the date
             $date->delete();
 
@@ -168,7 +184,8 @@ class EventSettingsController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'register_date_id' => 'required|exists:register_dates,id',
-            'time'             => 'required|string',
+            'start_time'       => 'required|date_format:H:i',
+            'end_time'         => 'required|date_format:H:i|after:start_time',
         ]);
 
         if ($validator->fails()) {
@@ -178,7 +195,8 @@ class EventSettingsController extends Controller
         try {
             $time = RegisterTime::create([
                 'register_date_id' => $request->register_date_id,
-                'time'             => $request->time,
+                'start_time'       => $request->start_time,
+                'end_time'         => $request->end_time,
                 'is_active'        => true,
             ]);
 
@@ -194,23 +212,36 @@ class EventSettingsController extends Controller
     public function updateRegisterTime(Request $request, $id)
     {
         $validator = Validator::make($request->all(), [
-            'is_active' => 'sometimes|boolean',
-            'time'      => 'sometimes|string',
+            'is_active'  => 'sometimes|boolean',
+            'start_time' => 'sometimes|date_format:H:i',
+            'end_time'   => 'sometimes|date_format:H:i',
         ]);
 
         if ($validator->fails()) {
             return back()->withErrors($validator);
         }
 
+        // If updating time fields, validate that end_time is after start_time
+        if ($request->has('start_time') && $request->has('end_time')) {
+            if ($request->start_time >= $request->end_time) {
+                return back()->withErrors(['end_time' => 'End time must be after start time']);
+            }
+        }
+
         try {
             $time       = RegisterTime::findOrFail($id);
             $updateData = [];
+
             if ($request->has('is_active')) {
                 $updateData['is_active'] = (bool) $request->is_active;
             }
-            if ($request->has('time')) {
-                $updateData['time'] = $request->time;
+            if ($request->has('start_time')) {
+                $updateData['start_time'] = $request->start_time;
             }
+            if ($request->has('end_time')) {
+                $updateData['end_time'] = $request->end_time;
+            }
+
             if (! empty($updateData)) {
                 $time->update($updateData);
             }
@@ -264,6 +295,88 @@ class EventSettingsController extends Controller
             return back()->with('success', 'Slot added successfully');
         } catch (\Exception $e) {
             return back()->with('error', 'Failed to add slot');
+        }
+    }
+
+    /**
+     * Get count of available time slots for mass adding
+     */
+    public function getTimeSlotsCount()
+    {
+        try {
+            $count = RegisterTime::where('is_active', true)->count();
+            return response()->json(['count' => $count]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Failed to get time slots count'], 500);
+        }
+    }
+
+    /**
+     * Mass add slots to multiple time slots
+     */
+    public function massAddSlots(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'title'           => 'required|string|max:255',
+            'available_slots' => 'required|integer|min:1|max:1000',
+            'time_ids'        => 'required|array|min:1|max:100',
+            'time_ids.*'      => 'required|integer|exists:register_times,id',
+        ]);
+
+        if ($validator->fails()) {
+            return back()->withErrors($validator)->withInput();
+        }
+
+        try {
+            $timeIds        = $request->time_ids;
+            $title          = $request->title;
+            $availableSlots = $request->available_slots;
+            $count          = count($timeIds);
+
+            // Check if any of the time slots already have slots with the same title
+            $existingSlots = RegisterSlot::whereIn('register_time_id', $timeIds)
+                ->where('title', $title)
+                ->exists();
+
+            if ($existingSlots) {
+                return back()->withErrors(['title' => "Slots with title '{$title}' already exist in some of the selected time slots"])->withInput();
+            }
+
+            // Use database transaction for data integrity
+            \DB::beginTransaction();
+
+            $createdSlots = [];
+
+            // Create slots for all time IDs
+            foreach ($timeIds as $timeId) {
+                $slot = RegisterSlot::create([
+                    'register_time_id' => $timeId,
+                    'title'            => $title,
+                    'available_slots'  => $availableSlots,
+                    'is_active'        => true,
+                ]);
+                $createdSlots[] = $slot;
+            }
+
+            \DB::commit();
+
+            $successMessage = $count === 1
+            ? "Successfully created slot '{$title}' with {$availableSlots} capacity"
+            : "Successfully created {$count} slots '{$title}' with {$availableSlots} capacity each across all selected time slots";
+
+            return back()->with('success', $successMessage);
+
+        } catch (\Exception $e) {
+            \DB::rollBack();
+            \Log::error('Failed to mass add slots: ' . $e->getMessage(), [
+                'title'           => $request->title,
+                'available_slots' => $request->available_slots,
+                'time_ids'        => $request->time_ids,
+                'error'           => $e->getMessage(),
+                'trace'           => $e->getTraceAsString(),
+            ]);
+
+            return back()->with('error', 'Failed to mass add slots. Please try again or contact support if the problem persists.')->withInput();
         }
     }
 
@@ -326,7 +439,9 @@ class EventSettingsController extends Controller
     {
         $search = trim((string) $request->query('q', ''));
 
-        $registrations = RegisterDate::with(['times.slots.userSelections' => function ($query) use ($search) {
+        $registrations = RegisterDate::with(['times' => function ($query) {
+            $query->orderBy('start_time', 'asc');
+        }, 'times.slots.userSelections' => function ($query) use ($search) {
             $query->where('is_delete', false);
             if ($search !== '') {
                 $query->where(function ($q) use ($search) {
@@ -335,7 +450,7 @@ class EventSettingsController extends Controller
                 });
             }
         }])
-            ->orderBy('date')
+            ->orderBy('date', 'asc')
             ->get()
             ->map(function ($date) {
                 $times = $date->times->map(function ($time) {
@@ -363,17 +478,28 @@ class EventSettingsController extends Controller
                         })
                         ->values();
 
+                    // Format time display - use time range if available, fallback to old time field
+                    $timeDisplay   = '';
+                    $formattedTime = '';
+
+                    if ($time->start_time && $time->end_time) {
+                        $timeDisplay   = $time->start_time . ' - ' . $time->end_time;
+                        $formattedTime = date('g:i A', strtotime($time->start_time)) . ' - ' . date('g:i A', strtotime($time->end_time));
+                    } else {
+                        $timeDisplay   = $time->start_time || 'No time set';
+                        $formattedTime = $time->start_time ? date('g:i A', strtotime($time->start_time)) : 'No time set';
+                    }
+
                     return [
                         'id'             => $time->id,
-                        'time'           => $time->time,
-                        'formatted_time' => date('g:i A', strtotime($time->time)),
+                        'time'           => $timeDisplay,
+                        'formatted_time' => $formattedTime,
                         'slots'          => $slots,
                     ];
                 })
                     ->filter(function ($time) {
                         return collect($time['slots'])->count() > 0;
                     })
-                    ->sortBy('time')
                     ->values();
 
                 return [

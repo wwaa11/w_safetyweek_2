@@ -17,14 +17,16 @@ class RegistrationsExport implements FromCollection, WithHeadings, WithMapping, 
     {
         $this->rows = collect();
 
-        $dates = RegisterDate::with(['times.slots.userSelections' => function ($query) {
+        $dates = RegisterDate::with(['times' => function ($query) {
+            $query->orderBy('start_time', 'asc');
+        }, 'times.slots.userSelections' => function ($query) {
             $query->where('is_delete', false);
         }])
-            ->orderBy('date')
+            ->orderBy('date', 'asc')
             ->get();
 
         foreach ($dates as $date) {
-            foreach ($date->times()->orderBy('time')->get() as $time) {
+            foreach ($date->times as $time) {
                 foreach ($time->slots as $slot) {
                     // Only process slots that have non-deleted user selections
                     $nonDeletedSelections = $slot->userSelections->filter(function ($selection) {
@@ -32,15 +34,25 @@ class RegistrationsExport implements FromCollection, WithHeadings, WithMapping, 
                     });
 
                     foreach ($nonDeletedSelections as $selection) {
+                        // Format time display - use time range if available, fallback to old time field
+                        $timeDisplay   = '';
+                        $formattedTime = '';
+
+                        if ($time->start_time && $time->end_time) {
+                            $timeDisplay   = $time->start_time . ' - ' . $time->end_time;
+                            $formattedTime = date('g:i A', strtotime($time->start_time)) . ' - ' . date('g:i A', strtotime($time->end_time));
+                        } else {
+                            $timeDisplay   = $time->start_time || 'No time set';
+                            $formattedTime = $time->start_time ? date('g:i A', strtotime($time->start_time)) : 'No time set';
+                        }
+
                         $this->rows->push([
                             'date'           => $date->date->format('Y-m-d'),
                             'formatted_date' => $date->date->format('l, F j, Y'),
-                            'time'           => $time->time,
-                            'formatted_time' => date('g:i A', strtotime($time->time)),
+                            'time'           => $timeDisplay,
                             'slot_title'     => $slot->title,
                             'userid'         => $selection->userid,
                             'name'           => $selection->name,
-                            'position'       => $selection->position,
                             'department'     => $selection->department,
                             'register_type'  => $selection->register_type,
                         ]);
@@ -61,11 +73,9 @@ class RegistrationsExport implements FromCollection, WithHeadings, WithMapping, 
             'Date',
             'Date (Formatted)',
             'Time',
-            'Time (Formatted)',
             'Slot Title',
             'User ID',
             'Name',
-            'Position',
             'Department',
             'Register Type',
         ];
@@ -80,11 +90,9 @@ class RegistrationsExport implements FromCollection, WithHeadings, WithMapping, 
             $row['date'],
             $row['formatted_date'],
             $row['time'],
-            $row['formatted_time'],
             $row['slot_title'],
             $row['userid'],
             $row['name'],
-            $row['position'],
             $row['department'],
             $row['register_type'],
         ];
