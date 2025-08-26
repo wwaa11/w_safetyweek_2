@@ -446,8 +446,7 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                             </h1>
 
                             <p className="text-base sm:text-lg lg:text-xl text-white max-w-3xl mx-auto mb-6 sm:mb-8 leading-relaxed drop-shadow-md px-4">
-                                เข้าร่วมกับเราในสัปดาห์แห่งการฝึกอบรมความปลอดภัยที่น่าตื่นเต้น
-                                เลือกช่วงเวลาที่คุณต้องการและจองตำแหน่งของคุณวันนี้
+                                เลือกช่วงเวลาที่คุณต้องการและลงทะเบียนวันนี้ เพื่อเข้าร่วมกิจกรรม {settings.title}
                             </p>
 
                             {/* Registration Status Badge */}
@@ -979,7 +978,7 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                                     <div className="text-center">
                                         <Button
                                             onClick={handleShowConfirmModal}
-                                            className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white px-6 sm:px-12 py-4 text-lg sm:text-xl font-bold rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300"
+                                            className="bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white px-6 sm:px-12 py-4 text-lg sm:text-xl font-bold rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 min-h-[48px]"
                                             disabled={!userId.trim() || !userName.trim()}
                                         >
                                             <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3" />
@@ -993,7 +992,7 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                                     <div className="text-center">
                                         <Button
                                             onClick={handleShowOutsourceConfirmModal}
-                                            className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-6 sm:px-12 py-4 text-lg sm:text-xl font-bold rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300"
+                                            className="bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white px-6 sm:px-12 py-4 text-lg sm:text-xl font-bold rounded-2xl shadow-2xl hover:shadow-3xl transform hover:scale-105 transition-all duration-300 min-h-[48px]"
                                             disabled={!userName.trim()}
                                         >
                                             <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 mr-2 sm:mr-3" />
@@ -1092,15 +1091,15 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                 {/* Confirmation Modal */}
                 {showConfirmModal && (
                     <div
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 touch-none"
                         onClick={() => setShowConfirmModal(false)}
                     >
                         <div
-                            className="bg-white rounded-3xl p-0 max-w-lg w-full mx-4 relative shadow-2xl transform transition-all duration-300 ease-out scale-100 overflow-hidden"
+                            className="bg-white rounded-3xl p-0 max-w-lg w-full mx-4 relative shadow-2xl transform transition-all duration-300 ease-out scale-100 overflow-hidden touch-auto"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Header */}
-                            <div className="bg-gradient-to-r from-teal-600 to-emerald-600 p-6 text-white text-center">
+                            <div className="bg-gradient-to-r from-teal-600 to-emerald-600 p-4 sm:p-6 text-white text-center">
                                 <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <CheckCircle className="w-8 h-8 text-white" />
                                 </div>
@@ -1113,22 +1112,22 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                             </div>
 
                             {/* Content */}
-                            <div className="p-6">
-                                <div className="bg-gradient-to-br from-gray-50 to-teal-50 rounded-2xl p-6 mb-6">
-                                    <div className="grid gap-4 md:grid-cols-2 text-sm">
-                                        <div className="bg-white rounded-xl p-4 border border-gray-200">
+                            <div className="p-4 sm:p-6">
+                                <div className="bg-gradient-to-br from-gray-50 to-teal-50 rounded-2xl p-4 sm:p-6 mb-6">
+                                    <div className="grid gap-3 sm:gap-4 grid-cols-1 sm:grid-cols-2 text-sm">
+                                        <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200">
                                             <span className="font-semibold text-gray-700 text-xs uppercase tracking-wide">รหัสพนักงาน/รหัสแพทย์</span>
-                                            <p className="text-gray-900 mt-2 font-mono bg-gray-100 px-3 py-2 rounded-lg">{userId}</p>
+                                            <p className="text-gray-900 mt-2 font-mono bg-gray-100 px-2 sm:px-3 py-2 rounded-lg break-all">{userId}</p>
                                         </div>
-                                        <div className="bg-white rounded-xl p-4 border border-gray-200">
+                                        <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200">
                                             <span className="font-semibold text-gray-700 text-xs uppercase tracking-wide">ชื่อ-นามสกุล</span>
-                                            <p className="text-gray-900 mt-2 font-medium">{userName}</p>
+                                            <p className="text-gray-900 mt-2 font-medium break-words">{userName}</p>
                                         </div>
-                                        <div className="bg-white rounded-xl p-4 border border-gray-200">
+                                        <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200">
                                             <span className="font-semibold text-gray-700 text-xs uppercase tracking-wide">แผนก/หน่วยงาน</span>
-                                            <p className="text-gray-900 mt-2">{department || 'ไม่ระบุ'}</p>
+                                            <p className="text-gray-900 mt-2 break-words">{department || 'ไม่ระบุ'}</p>
                                         </div>
-                                        <div className="bg-white rounded-xl p-4 border border-gray-200">
+                                        <div className="bg-white rounded-xl p-3 sm:p-4 border border-gray-200">
                                             <span className="font-semibold text-gray-700 text-xs uppercase tracking-wide">ประเภท</span>
                                             <p className="text-gray-900 mt-2">
                                                 {registerType === 'regular' ? 'พนักงานประจำ (Regular Employee)' : 'Outsource'}
@@ -1149,23 +1148,23 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                                 )}
 
                                 {/* Actions */}
-                                <div className="flex gap-4">
+                                <div className="flex flex-col sm:flex-row gap-4">
                                     <Button
                                         onClick={handleEditInformation}
                                         variant="outline"
-                                        className="flex-1 py-3 px-6 rounded-xl border-2 hover:bg-gray-50 transition-all duration-200"
+                                        className="flex-1 py-3 px-6 rounded-xl border-2 hover:bg-gray-50 transition-all duration-200 min-h-[44px] order-2 sm:order-1"
                                     >
                                         <span className="mr-2">✏️</span>
                                         แก้ไขข้อมูล
                                     </Button>
                                     <Button
                                         onClick={handleConfirmInformation}
-                                        className={`flex-1 py-3 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 ${registerType === 'outsource'
+                                        className={`flex-1 py-3 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 min-h-[44px] order-1 sm:order-2 ${registerType === 'outsource'
                                             ? 'bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white'
                                             : 'bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white'
                                             }`}
                                     >
-                                        <CheckCircle className="w-5 h-2" />
+                                        <CheckCircle className="w-5 h-5 mr-2" />
                                         ยืนยันและดำเนินการต่อ
                                     </Button>
                                 </div>
@@ -1174,9 +1173,9 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                             {/* Close Button */}
                             <button
                                 onClick={() => setShowConfirmModal(false)}
-                                className="absolute top-4 right-4 w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-all duration-200"
+                                className="absolute top-4 right-4 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-all duration-200 min-w-[48px] min-h-[48px]"
                             >
-                                <X className="w-5 h-5" />
+                                <X className="w-6 h-6" />
                             </button>
                         </div>
                     </div>
@@ -1185,15 +1184,15 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                 {/* Not Me Confirmation Modal */}
                 {showNotMeModal && (
                     <div
-                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+                        className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 touch-none"
                         onClick={() => setShowNotMeModal(false)}
                     >
                         <div
-                            className="bg-white rounded-3xl p-0 max-w-lg w-full mx-4 relative shadow-2xl transform transition-all duration-300 ease-out scale-100 overflow-hidden"
+                            className="bg-white rounded-3xl p-0 max-w-lg w-full mx-4 relative shadow-2xl transform transition-all duration-300 ease-out scale-100 overflow-hidden touch-auto"
                             onClick={(e) => e.stopPropagation()}
                         >
                             {/* Header */}
-                            <div className="bg-gradient-to-r from-red-600 to-pink-600 p-6 text-white text-center">
+                            <div className="bg-gradient-to-r from-red-600 to-pink-600 p-4 sm:p-6 text-white text-center">
                                 <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                                     <X className="w-8 h-8 text-white" />
                                 </div>
@@ -1206,8 +1205,8 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                             </div>
 
                             {/* Content */}
-                            <div className="p-6">
-                                <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-2xl p-6 mb-6">
+                            <div className="p-4 sm:p-6">
+                                <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-2xl p-4 sm:p-6 mb-6">
                                     <div className="text-center">
                                         <p className="text-red-700 text-lg font-semibold mb-2">
                                             การดำเนินการนี้จะ:
@@ -1221,18 +1220,18 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                                 </div>
 
                                 {/* Actions */}
-                                <div className="flex gap-4">
+                                <div className="flex flex-col sm:flex-row gap-4">
                                     <Button
                                         onClick={() => setShowNotMeModal(false)}
                                         variant="outline"
-                                        className="flex-1 py-3 px-6 rounded-xl border-2 hover:bg-gray-50 transition-all duration-200"
+                                        className="flex-1 py-3 px-6 rounded-xl border-2 hover:bg-gray-50 transition-all duration-200 min-h-[44px] order-2 sm:order-1"
                                     >
                                         <span className="mr-2">❌</span>
                                         ยกเลิก
                                     </Button>
                                     <Button
                                         onClick={clearSlotSelection}
-                                        className="flex-1 py-3 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white"
+                                        className="flex-1 py-3 px-6 rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 min-h-[44px] order-1 sm:order-2 bg-gradient-to-r from-red-600 to-pink-600 hover:from-red-700 hover:to-pink-700 text-white"
                                     >
                                         <X className="w-5 h-5 mr-2" />
                                         ยืนยันการล้างข้อมูล
@@ -1243,9 +1242,9 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                             {/* Close Button */}
                             <button
                                 onClick={() => setShowNotMeModal(false)}
-                                className="absolute top-4 right-4 w-10 h-10 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-all duration-200"
+                                className="absolute top-4 right-4 w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center text-white hover:bg-white/30 transition-all duration-200 min-w-[48px] min-h-[48px]"
                             >
-                                <X className="w-5 h-5" />
+                                <X className="w-6 h-6" />
                             </button>
                         </div>
                     </div>

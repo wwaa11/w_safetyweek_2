@@ -52,7 +52,7 @@ export default function AdminRegistrations({ registrations, search: initialSearc
     }, [search]);
     const handleDeleteRegistration = (registrationId: number) => {
         if (confirm('Are you sure you want to delete this registration?')) {
-            router.delete(route('admin.registrations.delete', registrationId));
+            router.post(route('admin.registrations.delete', registrationId));
         }
     };
 

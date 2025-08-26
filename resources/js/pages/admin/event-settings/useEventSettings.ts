@@ -321,11 +321,11 @@ export function useEventSettings({
     const removeDate = async () => {
         if (!deleteDateId) return;
         setIsLoading(true);
+        setShowDeleteDateDialog(false); // Close dialog immediately
         try {
-            router.delete(route('admin.dates.delete', { id: deleteDateId }), {
+            router.post(route('admin.dates.delete', { id: deleteDateId }), {}, {
                 onFinish: () => {
                     setIsLoading(false);
-                    setShowDeleteDateDialog(false);
                     setDeleteDateId(null);
                 },
                 preserveScroll: true,
@@ -334,6 +334,7 @@ export function useEventSettings({
         } catch (error) {
             console.error('Error deleting date:', error);
             setIsLoading(false);
+            setShowDeleteDateDialog(true); // Reopen dialog on error
         }
     };
 
@@ -345,11 +346,11 @@ export function useEventSettings({
     const removeTime = async () => {
         if (!deleteTimeId) return;
         setIsLoading(true);
+        setShowDeleteTimeDialog(false); // Close dialog immediately
         try {
-            router.delete(route('admin.times.delete', { id: deleteTimeId }), {
+            router.post(route('admin.times.delete', { id: deleteTimeId }), {}, {
                 onFinish: () => {
                     setIsLoading(false);
-                    setShowDeleteTimeDialog(false);
                     setDeleteTimeId(null);
                 },
                 preserveScroll: true,
@@ -358,6 +359,7 @@ export function useEventSettings({
         } catch (error) {
             console.error('Error deleting time:', error);
             setIsLoading(false);
+            setShowDeleteTimeDialog(true); // Reopen dialog on error
         }
     };
 
@@ -369,11 +371,11 @@ export function useEventSettings({
     const removeSlot = async () => {
         if (!deleteSlotId) return;
         setIsLoading(true);
+        setShowDeleteSlotDialog(false); // Close dialog immediately
         try {
-            router.delete(route('admin.slots.delete', { id: deleteSlotId }), {
+            router.post(route('admin.slots.delete', { id: deleteSlotId }), {}, {
                 onFinish: () => {
                     setIsLoading(false);
-                    setShowDeleteSlotDialog(false);
                     setDeleteSlotId(null);
                 },
                 preserveScroll: true,
@@ -382,6 +384,7 @@ export function useEventSettings({
         } catch (error) {
             console.error('Error deleting slot:', error);
             setIsLoading(false);
+            setShowDeleteSlotDialog(true); // Reopen dialog on error
         }
     };
 
