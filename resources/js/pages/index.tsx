@@ -429,56 +429,81 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-slate-50 via-teal-50 to-emerald-100 text-gray-900">
-            {/* Modern Header with Glassmorphism */}
+            {/* Modern Header with Enhanced Design */}
             <div className="relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-teal-600/40 via-emerald-600/40 to-cyan-600/40"></div>
+                {/* Background with multiple gradient layers */}
+                <div className="absolute inset-0">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-900 via-indigo-800 to-purple-900"></div>
+                    <div className="absolute inset-0 bg-gradient-to-r from-teal-600/30 via-emerald-600/30 to-cyan-600/30"></div>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent"></div>
+
+                    {/* Decorative elements */}
+                    <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-400/20 to-transparent rounded-full blur-3xl"></div>
+                    <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-purple-400/20 to-transparent rounded-full blur-3xl"></div>
+                    <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 w-96 h-96 bg-gradient-to-t from-teal-400/20 to-transparent rounded-full blur-3xl"></div>
+                </div>
+
                 <div className="relative z-10">
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-12">
+                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-16">
                         {/* Hero Section */}
                         <div className="text-center">
-                            <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/30 backdrop-blur-md border border-white/40 text-white text-sm font-medium mb-6 shadow-lg">
-                                <Calendar className="w-4 h-4" />
-                                Praram 9 Hospital
+                            {/* Logo with enhanced styling */}
+                            <div className="mb-8 flex justify-center">
+                                <div className="relative">
+                                    <div className="absolute inset-0 bg-white/20 rounded-full blur-xl scale-150"></div>
+                                    <img
+                                        src="PR9/Logo.png"
+                                        alt="Praram 9 Hospital Logo"
+                                        className="relative h-24 w-auto drop-shadow-2xl filter brightness-110"
+                                    />
+                                </div>
                             </div>
 
-                            <h1 className="text-3xl sm:text-4xl lg:text-5xl xl:text-6xl font-bold text-white mb-4 sm:mb-6 leading-tight drop-shadow-lg px-4">
+                            {/* Hospital Badge with enhanced design */}
+                            <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-white/25 backdrop-blur-md border border-white/40 text-white text-sm font-medium mb-8 shadow-2xl hover:bg-white/30 transition-all duration-300">
+                                <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                                <Calendar className="w-4 h-4" />
+                                <span className="font-semibold">Praram 9 Hospital</span>
+                            </div>
+
+                            {/* Main Title with enhanced typography */}
+                            <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-black text-white mb-6 sm:mb-8 leading-tight drop-shadow-2xl px-4 bg-gradient-to-r from-white via-blue-100 to-cyan-100 bg-clip-text text-transparent">
                                 {settings.title}
                             </h1>
 
-                            <p className="text-base sm:text-lg lg:text-xl text-white max-w-3xl mx-auto mb-6 sm:mb-8 leading-relaxed drop-shadow-md px-4">
+                            {/* Subtitle with enhanced styling */}
+                            <p className="text-lg sm:text-xl lg:text-2xl text-blue-100 max-w-4xl mx-auto mb-8 sm:mb-10 leading-relaxed drop-shadow-lg px-4 font-medium">
                                 เลือกช่วงเวลาที่คุณต้องการและลงทะเบียนวันนี้ เพื่อเข้าร่วมกิจกรรม {settings.title}
                             </p>
 
-                            {/* Registration Status Badge */}
-                            <div className="inline-flex items-center gap-2 sm:gap-3 px-4 sm:px-6 py-3 sm:py-4 rounded-2xl bg-white/20 backdrop-blur-md border border-white/30 shadow-2xl">
+                            {/* Enhanced Registration Status Badge */}
+                            <div className="inline-flex items-center gap-3 px-6 py-4 rounded-2xl bg-white/25 backdrop-blur-md border border-white/40 shadow-2xl hover:scale-105 transition-all duration-300 mb-8">
                                 {settings.is_registration_open ? (
                                     <>
-                                        <div className="w-3 h-3 sm:w-4 sm:h-4 bg-emerald-400 rounded-full animate-pulse shadow-lg"></div>
-                                        <span className="text-white font-semibold text-base sm:text-lg drop-shadow-md">
+                                        <div className="w-4 h-4 bg-emerald-400 rounded-full animate-pulse shadow-lg ring-4 ring-emerald-400/30"></div>
+                                        <span className="text-white font-bold text-lg drop-shadow-md">
                                             เปิดลงทะเบียนแล้ว
                                         </span>
+                                        <div className="w-4 h-4 bg-emerald-400 rounded-full animate-pulse shadow-lg ring-4 ring-emerald-400/30"></div>
                                     </>
                                 ) : (
                                     <>
-                                        <div className="w-3 h-3 sm:w-4 sm:h-4 bg-red-400 rounded-full shadow-lg"></div>
-                                        <span className="text-white font-semibold text-base sm:text-lg drop-shadow-md">
+                                        <div className="w-4 h-4 bg-red-400 rounded-full shadow-lg ring-4 ring-red-400/30"></div>
+                                        <span className="text-white font-bold text-lg drop-shadow-md">
                                             ปิดลงทะเบียนแล้ว
                                         </span>
+                                        <div className="w-4 h-4 bg-red-400 rounded-full shadow-lg ring-4 ring-red-400/30"></div>
                                     </>
                                 )}
                             </div>
 
-                            {/* Registration Period */}
+                            {/* Enhanced Registration Period */}
                             {settings.register_start_date && settings.register_end_date && (
-                                <div className="mt-4 sm:mt-6 text-white text-xs sm:text-sm drop-shadow-md px-4">
-                                    <p className="flex flex-col sm:flex-row items-center justify-center gap-1 sm:gap-2 text-center">
-                                        <span className="flex items-center gap-1 sm:gap-2">
-                                            <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
-                                            <span className="hidden sm:inline">ระยะเวลาลงทะเบียน:</span>
-                                            <span className="sm:hidden">ระยะเวลาลงทะเบียน</span>
-                                        </span>
-                                        <span className="text-center">
-                                            {new Date(settings.register_start_date).toLocaleDateString('th-TH', {
+                                <div className="mt-6 text-blue-100 text-sm sm:text-base drop-shadow-md px-4">
+                                    <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-white/15 backdrop-blur-md border border-white/30">
+                                        <Calendar className="w-4 h-4 text-blue-200" />
+                                        <span className="font-medium">
+                                            ระยะเวลาลงทะเบียน: {new Date(settings.register_start_date).toLocaleDateString('th-TH', {
                                                 year: 'numeric',
                                                 month: 'long',
                                                 day: 'numeric'
@@ -488,7 +513,7 @@ export default function UserIndex({ availableDates, settings }: UserIndexProps) 
                                                 day: 'numeric'
                                             })}
                                         </span>
-                                    </p>
+                                    </div>
                                 </div>
                             )}
                         </div>

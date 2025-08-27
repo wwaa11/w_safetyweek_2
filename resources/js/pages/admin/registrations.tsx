@@ -7,7 +7,6 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Trash2, Calendar, Clock, Users, ArrowLeft, Building2, Search, Download, X } from 'lucide-react';
 import { router } from '@inertiajs/react';
-import axios from 'axios';
 
 interface Registration {
     id: number;
@@ -97,29 +96,33 @@ export default function AdminRegistrations({
         router.visit(route('admin.dashboard'));
     };
 
-    const handleExport = async () => {
+    const handleExport = () => {
         setIsExporting(true);
         try {
-            // Build query parameters for filtered export
-            const params = new URLSearchParams();
-            if (search.trim()) params.append('q', search.trim());
-            if (filterDepartment) params.append('department', filterDepartment);
-            if (filterRegisterType) params.append('register_type', filterRegisterType);
+            // Filter registrations based on current filters
+            const filteredRegistrations = registrations.map(date => ({
+                ...date,
+                times: date.times.map(time => ({
+                    ...time,
+                    slots: time.slots.map(slot => ({
+                        ...slot,
+                        userSelections: slot.userSelections.filter(selection => {
+                            const matchesSearch = !search.trim() ||
+                                selection.name.toLowerCase().includes(search.toLowerCase()) ||
+                                selection.userid.toLowerCase().includes(search.toLowerCase());
+                            const matchesDepartment = !filterDepartment || selection.department === filterDepartment;
+                            const matchesRegisterType = !filterRegisterType || selection.register_type === filterRegisterType;
+                            return matchesSearch && matchesDepartment && matchesRegisterType;
+                        })
+                    }))
+                }))
+            }));
 
-            const exportUrl = `${route('admin.registrations.export')}?${params.toString()}`;
+            // Create CSV content
+            const csvContent = generateCSV(filteredRegistrations);
 
-            const response = await axios.get(exportUrl, {
-                responseType: 'blob',
-                headers: {
-                    'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                },
-            });
-
-            // Create blob from response data
-            const blob = new Blob([response.data], {
-                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-            });
-
+            // Create and download the file
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
@@ -129,7 +132,7 @@ export default function AdminRegistrations({
             if (search.trim() || filterDepartment || filterRegisterType) {
                 filename += '_filtered';
             }
-            filename += '.xlsx';
+            filename += '.csv';
 
             a.download = filename;
             document.body.appendChild(a);
@@ -142,6 +145,52 @@ export default function AdminRegistrations({
         } finally {
             setIsExporting(false);
         }
+    };
+
+    const generateCSV = (registrations: Registration[]): string => {
+        const headers = [
+            'Date',
+            'Time',
+            'Slot Title',
+            'User ID',
+            'Name',
+            'Department',
+            'Register Type'
+        ];
+
+        const rows = [headers.join(',')];
+
+        registrations.forEach(date => {
+            date.times.forEach(time => {
+                time.slots.forEach(slot => {
+                    if (slot.userSelections.length > 0) {
+                        slot.userSelections.forEach(selection => {
+                            const row = [
+                                `"${date.formatted_date}"`,
+                                `"${time.formatted_time}"`,
+                                `"${slot.title}"`,
+                                `"${selection.userid}"`,
+                                `"${selection.name}"`,
+                                `"${selection.department}"`,
+                                `"${selection.register_type}"`
+                            ];
+                            rows.push(row.join(','));
+                        });
+                    } else {
+                        // Add empty row for slots with no registrations
+                        const row = [
+                            `"${date.formatted_date}"`,
+                            `"${time.formatted_time}"`,
+                            `"${slot.title}"`,
+                            '', '', '', ''
+                        ];
+                        rows.push(row.join(','));
+                    }
+                });
+            });
+        });
+
+        return rows.join('\n');
     };
 
     return (
@@ -266,7 +315,7 @@ export default function AdminRegistrations({
                                 <span>Export Data</span>
                             </CardTitle>
                             <CardDescription className="text-gray-600 dark:text-gray-300">
-                                Download filtered registration data as Excel file
+                                Download filtered registration data as CSV file
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -277,7 +326,7 @@ export default function AdminRegistrations({
                                     className="flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white shadow-lg w-full sm:w-auto"
                                 >
                                     <Download className="h-4 w-4" />
-                                    <span>{isExporting ? 'Exporting...' : 'Export to Excel'}</span>
+                                    <span>{isExporting ? 'Exporting...' : 'Export to CSV'}</span>
                                 </Button>
 
                                 <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center">

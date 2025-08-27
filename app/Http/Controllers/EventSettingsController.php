@@ -10,7 +10,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Inertia\Inertia;
 use Inertia\Response;
-use Maatwebsite\Excel\Facades\Excel;
 
 class EventSettingsController extends Controller
 {
@@ -548,37 +547,4 @@ class EventSettingsController extends Controller
         }
     }
 
-    /**
-     * Export all user slot selections grouped by date and time to Excel
-     */
-    public function exportRegistrations(Request $request)
-    {
-        try {
-            // Increase memory limit for large exports
-            ini_set('memory_limit', '512M');
-            ini_set('max_execution_time', 300);
-
-            $search       = $request->get('q');
-            $department   = $request->get('department');
-            $registerType = $request->get('register_type');
-
-            $filename = 'registrations_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
-
-            // Create export with filters if provided
-            $export = new \App\Exports\RegistrationsExport($search, $department, $registerType);
-
-            // Set proper headers to prevent corruption
-            return Excel::download($export, $filename, \Maatwebsite\Excel\Excel::XLSX, [
-                'Content-Type'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
-                'Cache-Control'       => 'no-cache, must-revalidate',
-                'Pragma'              => 'no-cache',
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Export failed: ' . $e->getMessage());
-            \Log::error('Export stack trace: ' . $e->getTraceAsString());
-
-            return back()->with('error', 'Failed to export registrations. Please try again. Error: ' . $e->getMessage());
-        }
-    }
 }
