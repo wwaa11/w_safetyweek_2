@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { Trash2, Calendar, Clock, Users, ArrowLeft, Building2 } from 'lucide-react';
+import { Trash2, Calendar, Clock, Users, ArrowLeft, Building2, Search, Download, X } from 'lucide-react';
 import { router } from '@inertiajs/react';
+import axios from 'axios';
 
 interface Registration {
     id: number;
@@ -35,21 +36,57 @@ interface Registration {
 interface AdminRegistrationsProps {
     registrations: Registration[];
     search?: string;
+    department?: string;
+    registerType?: string;
 }
 
-export default function AdminRegistrations({ registrations, search: initialSearch = '' }: AdminRegistrationsProps) {
+export default function AdminRegistrations({
+    registrations,
+    search: initialSearch = '',
+    department: initialDepartment = '',
+    registerType: initialRegisterType = ''
+}: AdminRegistrationsProps) {
     const [search, setSearch] = useState(initialSearch);
+    const [filterDepartment, setFilterDepartment] = useState(initialDepartment);
+    const [filterRegisterType, setFilterRegisterType] = useState(initialRegisterType);
+    const [isExporting, setIsExporting] = useState(false);
+
+    // Get unique departments and register types for filtering
+    const departments = Array.from(new Set(
+        registrations.flatMap(date =>
+            date.times.flatMap(time =>
+                time.slots.flatMap(slot =>
+                    slot.userSelections.map(selection => selection.department)
+                )
+            )
+        )
+    )).sort();
+
+    const registerTypes = Array.from(new Set(
+        registrations.flatMap(date =>
+            date.times.flatMap(time =>
+                time.slots.flatMap(slot =>
+                    slot.userSelections.map(selection => selection.register_type)
+                )
+            )
+        )
+    )).sort();
 
     useEffect(() => {
         const handle = setTimeout(() => {
-            const params = search.trim() ? { q: search.trim() } : {};
+            const params: any = {};
+            if (search.trim()) params.q = search.trim();
+            if (filterDepartment) params.department = filterDepartment;
+            if (filterRegisterType) params.register_type = filterRegisterType;
+
             router.get(route('admin.registrations'), params, {
                 preserveState: true,
                 replace: true,
             });
         }, 300);
         return () => clearTimeout(handle);
-    }, [search]);
+    }, [search, filterDepartment, filterRegisterType]);
+
     const handleDeleteRegistration = (registrationId: number) => {
         if (confirm('Are you sure you want to delete this registration?')) {
             router.post(route('admin.registrations.delete', registrationId));
@@ -58,6 +95,53 @@ export default function AdminRegistrations({ registrations, search: initialSearc
 
     const handleBackToDashboard = () => {
         router.visit(route('admin.dashboard'));
+    };
+
+    const handleExport = async () => {
+        setIsExporting(true);
+        try {
+            // Build query parameters for filtered export
+            const params = new URLSearchParams();
+            if (search.trim()) params.append('q', search.trim());
+            if (filterDepartment) params.append('department', filterDepartment);
+            if (filterRegisterType) params.append('register_type', filterRegisterType);
+
+            const exportUrl = `${route('admin.registrations.export')}?${params.toString()}`;
+
+            const response = await axios.get(exportUrl, {
+                responseType: 'blob',
+                headers: {
+                    'Accept': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                },
+            });
+
+            // Create blob from response data
+            const blob = new Blob([response.data], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            });
+
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+
+            // Create filename with filter info
+            let filename = `registrations_${new Date().toISOString().split('T')[0]}`;
+            if (search.trim() || filterDepartment || filterRegisterType) {
+                filename += '_filtered';
+            }
+            filename += '.xlsx';
+
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        } catch (error) {
+            console.error('Export error:', error);
+            alert('Failed to export. Please try again.');
+        } finally {
+            setIsExporting(false);
+        }
     };
 
     return (
@@ -81,31 +165,15 @@ export default function AdminRegistrations({ registrations, search: initialSearc
                                 </p>
                             </div>
                         </div>
-                        <div className="flex items-center space-x-6">
-                            <Input
-                                value={search}
-                                onChange={(e) => setSearch(e.target.value)}
-                                placeholder="Search by user ID or name"
-                                className="w-64 dark:bg-gray-800 dark:text-white"
-                            />
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => { window.location.href = route('admin.registrations.export'); }}
-                                className="flex items-center space-x-2 border-2 transition-all duration-200"
-                            >
-                                <span>Export Excel</span>
-                            </Button>
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={handleBackToDashboard}
-                                className="flex items-center space-x-2 border-2  transition-all duration-200"
-                            >
-                                <ArrowLeft className="h-4 w-4" />
-                                <span className="hidden sm:inline">Back to Dashboard</span>
-                            </Button>
-                        </div>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={handleBackToDashboard}
+                            className="flex items-center space-x-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                        >
+                            <ArrowLeft className="h-4 w-4" />
+                            <span>Back to Dashboard</span>
+                        </Button>
                     </div>
                 </div>
             </header>
@@ -113,6 +181,117 @@ export default function AdminRegistrations({ registrations, search: initialSearc
             {/* Main Content */}
             <main className="max-w-7xl mx-auto py-8 sm:px-6 lg:px-8">
                 <div className="px-4 py-6 sm:px-0">
+                    {/* Search and Filter Card */}
+                    <Card className="mb-6 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-lg">
+                        <CardHeader>
+                            <CardTitle className="flex items-center space-x-2 text-lg text-gray-900 dark:text-white">
+                                <Search className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                                <span>Search & Filter</span>
+                            </CardTitle>
+                            <CardDescription className="text-gray-600 dark:text-gray-300">
+                                Find specific registrations using search and filters
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            {/* Search Bar */}
+                            <div className="relative w-full">
+                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 dark:text-gray-500" />
+                                <Input
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    placeholder="Search by user ID or name..."
+                                    className="pl-10 bg-white dark:bg-gray-800 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 w-full"
+                                />
+                            </div>
+
+                            {/* Filter Controls */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Department
+                                    </label>
+                                    <select
+                                        value={filterDepartment}
+                                        onChange={(e) => setFilterDepartment(e.target.value)}
+                                        className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 w-full"
+                                    >
+                                        <option value="">All Departments</option>
+                                        {departments.map(dept => (
+                                            <option key={dept} value={dept}>{dept}</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                                        Register Type
+                                    </label>
+                                    <select
+                                        value={filterRegisterType}
+                                        onChange={(e) => setFilterRegisterType(e.target.value)}
+                                        className="px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-md bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-400 w-full"
+                                    >
+                                        <option value="">All Types</option>
+                                        {registerTypes.map(type => (
+                                            <option key={type} value={type}>{type}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Filter Actions */}
+                            <div className="flex justify-end pt-2">
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => {
+                                        setSearch('');
+                                        setFilterDepartment('');
+                                        setFilterRegisterType('');
+                                    }}
+                                    className="flex items-center space-x-2 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-200 border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700"
+                                >
+                                    <X className="h-4 w-4" />
+                                    <span>Clear All Filters</span>
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Export Card */}
+                    <Card className="mb-8 bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 shadow-lg">
+                        <CardHeader>
+                            <CardTitle className="flex items-center space-x-2 text-lg text-gray-900 dark:text-white">
+                                <Download className="h-5 w-5 text-green-600 dark:text-green-400" />
+                                <span>Export Data</span>
+                            </CardTitle>
+                            <CardDescription className="text-gray-600 dark:text-gray-300">
+                                Download filtered registration data as Excel file
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <Button
+                                    onClick={handleExport}
+                                    disabled={isExporting}
+                                    className="flex items-center justify-center space-x-2 bg-green-600 hover:bg-green-700 dark:bg-green-500 dark:hover:bg-green-600 text-white shadow-lg w-full sm:w-auto"
+                                >
+                                    <Download className="h-4 w-4" />
+                                    <span>{isExporting ? 'Exporting...' : 'Export to Excel'}</span>
+                                </Button>
+
+                                <div className="text-sm text-gray-600 dark:text-gray-400 flex items-center">
+                                    <span className="mr-2">📊</span>
+                                    <span>
+                                        {search || filterDepartment || filterRegisterType
+                                            ? 'Exporting filtered results'
+                                            : 'Exporting all registrations'}
+                                    </span>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
                     {/* Summary Stats */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                         <Card>

@@ -437,17 +437,28 @@ class EventSettingsController extends Controller
      */
     public function registrations(Request $request): Response
     {
-        $search = trim((string) $request->query('q', ''));
+        $search       = trim((string) $request->query('q', ''));
+        $department   = $request->query('department');
+        $registerType = $request->query('register_type');
 
         $registrations = RegisterDate::with(['times' => function ($query) {
             $query->orderBy('start_time', 'asc');
-        }, 'times.slots.userSelections' => function ($query) use ($search) {
+        }, 'times.slots.userSelections' => function ($query) use ($search, $department, $registerType) {
             $query->where('is_delete', false);
+
             if ($search !== '') {
                 $query->where(function ($q) use ($search) {
                     $q->where('userid', 'like', "%{$search}%")
                         ->orWhere('name', 'like', "%{$search}%");
                 });
+            }
+
+            if ($department) {
+                $query->where('department', $department);
+            }
+
+            if ($registerType) {
+                $query->where('register_type', $registerType);
             }
         }])
             ->orderBy('date', 'asc')
@@ -517,6 +528,8 @@ class EventSettingsController extends Controller
         return Inertia::render('admin/registrations', [
             'registrations' => $registrations,
             'search'        => $search,
+            'department'    => $department,
+            'registerType'  => $registerType,
         ]);
     }
 
@@ -538,10 +551,34 @@ class EventSettingsController extends Controller
     /**
      * Export all user slot selections grouped by date and time to Excel
      */
-    public function exportRegistrations()
+    public function exportRegistrations(Request $request)
     {
-        $filename = 'registrations_' . now()->format('Ymd_His') . '.xlsx';
+        try {
+            // Increase memory limit for large exports
+            ini_set('memory_limit', '512M');
+            ini_set('max_execution_time', 300);
 
-        return Excel::download(new \App\Exports\RegistrationsExport(), $filename);
+            $search       = $request->get('q');
+            $department   = $request->get('department');
+            $registerType = $request->get('register_type');
+
+            $filename = 'registrations_' . now()->format('Y-m-d_H-i-s') . '.xlsx';
+
+            // Create export with filters if provided
+            $export = new \App\Exports\RegistrationsExport($search, $department, $registerType);
+
+            // Set proper headers to prevent corruption
+            return Excel::download($export, $filename, \Maatwebsite\Excel\Excel::XLSX, [
+                'Content-Type'        => 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+                'Cache-Control'       => 'no-cache, must-revalidate',
+                'Pragma'              => 'no-cache',
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Export failed: ' . $e->getMessage());
+            \Log::error('Export stack trace: ' . $e->getTraceAsString());
+
+            return back()->with('error', 'Failed to export registrations. Please try again. Error: ' . $e->getMessage());
+        }
     }
 }
