@@ -122,7 +122,9 @@ export default function AdminRegistrations({
             const csvContent = generateCSV(filteredRegistrations);
 
             // Create and download the file
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const bom = '\uFEFF';
+            const csvContentWithBom = bom + csvContent;
+            const blob = new Blob([csvContentWithBom], { type: 'text/csv;charset=utf-8;' });
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
